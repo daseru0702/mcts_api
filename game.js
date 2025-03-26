@@ -31,27 +31,32 @@ function create() {
         for (let col = 0; col < boardSize; col++) {
             const x = col * cellSize;
             const y = row * cellSize;
-            // 격자판의 셀을 그립니다.
             this.add.rectangle(x + cellSize / 2, y + cellSize / 2, cellSize, cellSize, 0xffffff).setStrokeStyle(2, 0x000000);
         }
     }
     // 플레이어 초기 위치 설정
-    player1 = this.add.circle(270, 30, 20, 0xff0000); // 빨간색 플레이어
-    player2 = this.add.circle(270, 510, 20, 0x0000ff); // 파란색 플레이어
-    // 벽 드는 공간 그리기 (좌우)
+    player1 = this.add.circle(270, 30, 20, 0xff0000);
+    player2 = this.add.circle(270, 510, 20, 0x0000ff);
+    
+    // 벽 드는 공간 그리기
     const wallSpaceWidth = 30;
     const wallSpaceHeight = boardSize * cellSize;
-    this.add.rectangle(0, wallSpaceHeight / 2, wallSpaceWidth, wallSpaceHeight, 0x8B4513); // 왼쪽 갈색 공간
-    this.add.rectangle(540, wallSpaceHeight / 2, wallSpaceWidth, wallSpaceHeight, 0x8B4513); // 오른쪽 갈색 공간
+    this.add.rectangle(0, wallSpaceHeight / 2, wallSpaceWidth, wallSpaceHeight, 0x8B4513);
+    this.add.rectangle(540, wallSpaceHeight / 2, wallSpaceWidth, wallSpaceHeight, 0x8B4513);
+    
     // 입력 이벤트 설정
     this.input.on('pointerdown', (pointer) => {
-        handlePointerDown.call(this, pointer); // this를 명시적으로 바인딩
+        if (pointer.rightButtonDown()) {
+            toggleWallOrientation.call(this);
+        } else {
+            handlePointerDown.call(this, pointer);
+        }
     });
     this.input.on('pointermove', (pointer) => {
-        handlePointerMove.call(this, pointer); // 마우스 이동 시 벽 표시
+        handlePointerMove.call(this, pointer);
     });
     this.input.on('pointerup', (pointer) => {
-        handlePointerUp.call(this, pointer); // 마우스 버튼 해제 시 벽 설치
+        handlePointerUp.call(this, pointer);
     });
 }
 
@@ -161,35 +166,42 @@ function showValidMoves(player) {
     const playerX = Math.floor(player.x / cellSize);
     const playerY = Math.floor(player.y / cellSize);
     const opponent = currentPlayer === 1 ? player2 : player1; // 상대 플레이어
-    // 상하좌우 이동 가능한 칸 표시
     const possibleMoves = [
         { x: playerX, y: playerY - 1 }, // 위
         { x: playerX, y: playerY + 1 }, // 아래
         { x: playerX - 1, y: playerY }, // 왼쪽
         { x: playerX + 1, y: playerY }  // 오른쪽
     ];
+    
     validMoves = [];
     possibleMoves.forEach(move => {
         if (move.x >= 0 && move.x < 9 && move.y >= 0 && move.y < 9) {
-            // 상대 플레이어의 위치와 비교
             if (move.x === Math.floor(opponent.x / cellSize) && move.y === Math.floor(opponent.y / cellSize)) {
-                // 상대 플레이어가 있는 방향으로 한 칸 더 표시
                 const furtherMove = {
-                    x: move.x + (move.x === playerX ? 0 : (move.x < playerX ? -1 : 1)), // x 방향
-                    y: move.y + (move.y === playerY ? 0 : (move.y < playerY ? -1 : 1))  // y 방향
+                    x: move.x + (move.x === playerX ? 0 : (move.x < playerX ? -1 : 1)),
+                    y: move.y + (move.y === playerY ? 0 : (move.y < playerY ? -1 : 1))
                 };
                 if (furtherMove.x >= 0 && furtherMove.x < 9 && furtherMove.y >= 0 && furtherMove.y < 9) {
-                    validMoves.push(furtherMove);
-                    const indicator = this.add.rectangle(furtherMove.x * cellSize + cellSize / 2, furtherMove.y * cellSize + cellSize / 2, cellSize, cellSize, 0x00ff00, 0.5);
-                    moveIndicators.push(indicator); // 표시를 저장
+                    if (isMoveValid(playerX, playerY, furtherMove.x, furtherMove.y)) {
+                        validMoves.push(furtherMove);
+                        const indicator = this.add.rectangle(furtherMove.x * cellSize + cellSize / 2, furtherMove.y * cellSize + cellSize / 2, cellSize, cellSize, 0x00ff00, 0.5);
+                        moveIndicators.push(indicator);
+                    }
                 }
             } else {
-                validMoves.push(move);
-                const indicator = this.add.rectangle(move.x * cellSize + cellSize / 2, move.y * cellSize + cellSize / 2, cellSize, cellSize, 0x00ff00, 0.5);
-                moveIndicators.push(indicator); // 표시를 저장
+                if (isMoveValid(playerX, playerY, move.x, move.y)) {
+                    validMoves.push(move);
+                    const indicator = this.add.rectangle(move.x * cellSize + cellSize / 2, move.y * cellSize + cellSize / 2, cellSize, cellSize, 0x00ff00, 0.5);
+                    moveIndicators.push(indicator);
+                }
             }
         }
     });
+}
+
+function toggleWallOrientation() {
+    wallOrientation = (wallOrientation === 'horizontal') ? 'vertical' : 'horizontal'; // 방향 전환
+    console.log(`벽 방향이 ${wallOrientation}로 변경되었습니다.`);
 }
 
 function clearValidMoves() {
