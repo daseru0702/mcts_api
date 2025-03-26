@@ -17,9 +17,13 @@ let wallIndicators = []; // 벽 표시를 저장할 배열
 const cellSize = 60; // 셀 크기
 let isPlacingWall = false; // 벽을 드는 중인지 여부
 let wallOrientation = 'horizontal'; // 벽의 방향 (가로 또는 세로)
+let walls = []; // 설치된 벽 정보를 저장할 배열
+
+
 function preload() {
     // 필요한 이미지나 스프라이트를 로드합니다.
 }
+
 function create() {
     const boardSize = 9;
     // 보드판 그리기
@@ -50,6 +54,7 @@ function create() {
         handlePointerUp.call(this, pointer); // 마우스 버튼 해제 시 벽 설치
     });
 }
+
 function handlePointerDown(pointer) {
     const row = Math.floor(pointer.y / cellSize);
     const col = Math.floor(pointer.x / cellSize);
@@ -80,6 +85,7 @@ function handlePointerDown(pointer) {
         isPlacingWall = true; // 벽을 드는 상태로 변경
     }
 }
+
 function handlePointerMove(pointer) {
     if (isPlacingWall) {
         // 벽의 위치를 마우스에 따라 이동
@@ -89,42 +95,67 @@ function handlePointerMove(pointer) {
         if (wallOrientation === 'horizontal') {
             // 가로 벽 표시 (2칸 길이)
             if (cellX >= 0 && cellX < 8 && cellY >= 0 && cellY < 9) { // 2칸 길이이므로 cellX < 8
-                const wallIndicator = this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize / 2), cellSize * 2, 10, 0x8B4513, 0.5);
+                const wallIndicator = this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize), cellSize * 2, 10, 0x8B4513, 0.5);
                 wallIndicators.push(wallIndicator);
             }
         } else {
             // 세로 벽 표시 (2칸 길이)
             if (cellX >= 0 && cellX < 9 && cellY >= 0 && cellY < 8) { // 2칸 길이이므로 cellY < 8
-                const wallIndicator = this.add.rectangle((cellX * cellSize) + (cellSize / 2), (cellY * cellSize) + (cellSize), 10, cellSize * 2, 0x8B4513, 0.5);
+                const wallIndicator = this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize), 10, cellSize * 2, 0x8B4513, 0.5);
                 wallIndicators.push(wallIndicator);
             }
         }
     }
 }
+
 function handlePointerUp(pointer) {
     if (isPlacingWall) {
-        // 벽 설치
         const cellX = Math.floor(pointer.x / cellSize);
         const cellY = Math.floor(pointer.y / cellSize);
         if (wallOrientation === 'horizontal') {
-            // 가로 벽 설치
-            if (cellY >= 0 && cellY < 9 && cellX >= 0 && cellX < 8) { // 2칸 길이이므로 cellX < 8
-                const wall = this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize / 2), cellSize * 2, 10, 0x8B4513);
-                wallIndicators.push(wall); // 설치한 벽을 저장
-                console.log(`가로 벽이 (${cellX}, ${cellY})에 설치되었습니다.`); // 설치 메시지 출력
+            if (cellY >= 0 && cellY < 8 && cellX >= 0 && cellX < 8) {
+                const wall = {
+                    x: cellX,
+                    y: cellY,
+                    orientation: 'horizontal'
+                };
+                walls.push(wall); // 설치한 벽을 저장
+                this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize), cellSize * 2, 10, 0x8B4513);
+                console.log(`가로 벽이 (${cellX}, ${cellY})에 설치되었습니다.`);
             }
         } else {
-            // 세로 벽 설치
-            if (cellY >= 0 && cellY < 8 && cellX >= 0 && cellX < 9) { // 2칸 길이이므로 cellY < 8
-                const wall = this.add.rectangle((cellX * cellSize) + (cellSize / 2), (cellY * cellSize) + (cellSize), 10, cellSize * 2, 0x8B4513);
-                wallIndicators.push(wall); // 설치한 벽을 저장
-                console.log(`세로 벽이 (${cellX}, ${cellY})에 설치되었습니다.`); // 설치 메시지 출력
+            if (cellY >= 0 && cellY < 8 && cellX >= 0 && cellX < 9) {
+                const wall = {
+                    x: cellX,
+                    y: cellY,
+                    orientation: 'vertical'
+                };
+                walls.push(wall); // 설치한 벽을 저장
+                this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize), 10, cellSize * 2, 0x8B4513);
+                console.log(`세로 벽이 (${cellX}, ${cellY})에 설치되었습니다.`);
             }
         }
-        clearWallIndicators.call(this); // 벽 표시 제거
-        isPlacingWall = false; // 벽 드는 상태 종료
+        clearWallIndicators.call(this);
+        isPlacingWall = false;
     }
 }
+
+function isMoveValid(startX, startY, endX, endY) {
+    // 이동 경로에 벽이 있는지 확인
+    for (let wall of walls) {
+        if (wall.orientation === 'horizontal') {
+            if (wall.y === startY && ((wall.x === startX && endX === startX) || (wall.x === endX && startX === endX))) {
+                return false; // 가로 벽이 이동 경로에 있음
+            }
+        } else {
+            if (wall.x === startX && ((wall.y === startY && endY === startY) || (wall.y === endY && startY === endY))) {
+                return false; // 세로 벽이 이동 경로에 있음
+            }
+        }
+    }
+    return true; // 이동 가능
+}
+
 function showValidMoves(player) {
     clearValidMoves.call(this); // 이전 이동 표시 제거
     const playerX = Math.floor(player.x / cellSize);
@@ -160,6 +191,7 @@ function showValidMoves(player) {
         }
     });
 }
+
 function clearValidMoves() {
     validMoves = []; // 이동 가능한 칸 초기화
     // 이전에 표시된 이동 가능한 칸 제거
@@ -168,12 +200,14 @@ function clearValidMoves() {
     });
     moveIndicators = []; // 표시 배열 초기화
 }
+
 function clearWallIndicators() {
     wallIndicators.forEach(indicator => {
         indicator.destroy(); // Phaser의 destroy 메서드를 사용하여 제거
     });
     wallIndicators = []; // 표시 배열 초기화
 }
+
 function checkWinCondition(player) {
     const playerY = Math.floor(player.y / cellSize);
     // 플레이어 1이 아래쪽 끝에 도달했을 때
@@ -186,6 +220,7 @@ function checkWinCondition(player) {
     }
     return false; // 승리하지 않음
 }
+
 function resetGame() {
     // 게임 상태 초기화 로직
     player1.x = 270; // 초기 위치로 되돌리기
@@ -196,6 +231,7 @@ function resetGame() {
     clearValidMoves.call(this); // 이동 가능한 칸 초기화
     clearWallIndicators.call(this); // 벽 표시 초기화
 }
+
 function update() {
     // 게임 로직 업데이트
 }
