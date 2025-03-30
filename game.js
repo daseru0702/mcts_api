@@ -120,24 +120,24 @@ function handlePointerUp(pointer) {
         if (wallOrientation === 'horizontal') {
             if (cellY >= 0 && cellY < 8 && cellX >= 0 && cellX < 8) {
                 const wall = {
-                    x: cellX,
-                    y: cellY,
+                    x: cellX + 0.5, // 벽의 X 좌표를 중앙으로 설정
+                    y: cellY + 0.5, // 벽의 Y 좌표를 중앙으로 설정
                     orientation: 'horizontal'
                 };
                 walls.push(wall); // 설치한 벽을 저장
                 this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize), cellSize * 2, 10, 0x8B4513);
-                console.log(`가로 벽이 (${cellX}, ${cellY})에 설치되었습니다.`);
+                console.log(`가로 벽이 (${wall.x}, ${wall.y})에 설치되었습니다.`);
             }
         } else {
-            if (cellY >= 0 && cellY < 8 && cellX >= 0 && cellX < 9) {
+            if (cellY >= 0 && cellY < 9 && cellX >= 0 && cellX < 8) {
                 const wall = {
-                    x: cellX,
-                    y: cellY,
+                    x: cellX + 0.5, // 벽의 X 좌표를 중앙으로 설정
+                    y: cellY + 0.5, // 벽의 Y 좌표를 중앙으로 설정
                     orientation: 'vertical'
                 };
                 walls.push(wall); // 설치한 벽을 저장
-                this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize), 10, cellSize * 2, 0x8B4513);
-                console.log(`세로 벽이 (${cellX}, ${cellY})에 설치되었습니다.`);
+                this.add.rectangle((cellX * cellSize) + (cellSize), (cellY * cellSize) + (cellSize), 10, cellSize * 2, 0x8B4513); 
+                console.log(`세로 벽이 (${wall.x}, ${wall.y})에 설치되었습니다.`);
             }
         }
         clearWallIndicators.call(this);
@@ -146,15 +146,37 @@ function handlePointerUp(pointer) {
 }
 
 function isMoveValid(startX, startY, endX, endY) {
-    // 이동 경로에 벽이 있는지 확인
+    // 플레이어가 이동하려는 방향에 벽이 있는지 확인
     for (let wall of walls) {
         if (wall.orientation === 'horizontal') {
-            if (wall.y === startY && ((wall.x === startX && endX === startX) || (wall.x === endX && startX === endX))) {
-                return false; // 가로 벽이 이동 경로에 있음
+            // 가로 벽이 있는 경우
+            if (wall.y === startY + 0.5) { // 벽의 Y 위치가 플레이어의 Y 위치 + 0.5일 때
+                // 플레이어가 벽의 X 좌표와 0.5칸 이내에 있는지 확인
+                if (endX >= wall.x - 0.5 && endX <= wall.x + 1.5) {
+                    return false; // 위쪽으로 이동할 수 없음
+                }
             }
         } else {
-            if (wall.x === startX && ((wall.y === startY && endY === startY) || (wall.y === endY && startY === endY))) {
-                return false; // 세로 벽이 이동 경로에 있음
+            // 세로 벽이 있는 경우
+            if (wall.x === startX + 0.5) { // 벽의 X 위치가 플레이어의 X 위치 + 0.5일 때
+                // 플레이어가 벽의 Y 좌표와 0.5칸 이내에 있는지 확인
+                if (endY >= wall.y - 0.5 && endY <= wall.y + 1.5) {
+                    return false; // 왼쪽으로 이동할 수 없음
+                }
+            }
+        }
+    }
+    // 상하 이동을 체크
+    if (endY !== startY) {
+        for (let wall of walls) {
+            if (wall.orientation === 'horizontal') {
+                // 가로 벽이 이동하려는 Y 위치에 있을 경우
+                if (wall.y === endY + 0.5) {
+                    // 플레이어가 벽의 X 좌표와 0.5칸 이내에 있는지 확인
+                    if (endX >= wall.x - 0.5 && endX <= wall.x + 1.5) {
+                        return false; // 위쪽 또는 아래쪽으로 이동할 수 없음
+                    }
+                }
             }
         }
     }
