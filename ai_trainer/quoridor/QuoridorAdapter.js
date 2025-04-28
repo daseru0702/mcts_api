@@ -1,4 +1,4 @@
-// ai_server/games/quoridor/QuoridorAdapter.js
+// ai_trainer/games/quoridor/QuoridorAdapter.js
 
 import { QuoridorGame } from "./QuoridorGame.js";
 
