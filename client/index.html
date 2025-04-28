@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quoridor AI</title>
+  <style>
+    body { display: flex; height: 100vh; margin: 0; }
+    canvas { margin: auto; background: #f0d9b5; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <script type="module">
+    import { QuoridorGame } from "./games/quoridor/QuoridorGame.js";
+    import { GameController } from "./games/quoridor/controller.js";
+
+    const canvas = document.getElementById("gameCanvas");
+    const game   = new QuoridorGame();
+    new GameController(canvas, game);
+  </script>
+</body>
+</html>
