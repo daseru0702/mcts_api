@@ -6,7 +6,7 @@ import path from "path";
 // 게임 로직 및 MCTS 모듈 불러오기
 import { QuoridorGame } from "../client/games/quoridor/QuoridorGame.js";
 import { QuoridorAdapter } from "../ai_server/games/quoridor/QuoridorAdapter.js";
-import { MCTS } from "../ai_server/games/quoridor/mcts.js";
+import { MCTS } from "../common/mcts.js";
 
 // 설정
 const NUM_GAMES = 100;         // 생성할 self-play 게임 수

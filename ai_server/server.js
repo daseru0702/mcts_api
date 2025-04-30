@@ -6,7 +6,7 @@ import cors from "cors";
 
 import { QuoridorGame } from "./games/quoridor/QuoridorGame.js";
 import { QuoridorAdapter } from "./games/quoridor/QuoridorAdapter.js";
-import { MCTS } from "./games/quoridor/mcts.js";
+import { MCTS } from "../common/mcts.js";
 
 const app = express();
 app.use(cors());
