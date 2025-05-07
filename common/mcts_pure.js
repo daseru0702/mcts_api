@@ -36,8 +36,7 @@ export class MCTSPure {
   }
 
   expand(node) {
-    const moves = node.state.getPossibleMoves();
-    for (const mv of moves) {
+    for (const mv of node.state.getPossibleMoves()) {
       const nextState = node.state.clone().applyMove(mv);
       node.children.push(new Node(nextState, node, mv));
     }
@@ -50,7 +49,7 @@ export class MCTSPure {
       const mv    = moves[Math.floor(Math.random() * moves.length)];
       s = s.applyMove(mv);
     }
-    // 마지막에 진 사람이 currentPlayer, 승리자는 반대
+    // 승리자 계산 (state.currentPlayer 관점)
     const winner = (s.currentPlayer === state.currentPlayer) ? 2 : 1;
     return (winner === state.currentPlayer) ? 1 : 0;
   }
@@ -65,21 +64,20 @@ export class MCTSPure {
   bestMove() {
     if (this.root.children.length === 0) return null;
     return this.root.children
-      .reduce((a, b) => a.visits > b.visits ? a : b)
+      .reduce((a,b) => a.visits > b.visits ? a : b)
       .move;
   }
 
   bestUCT(node) {
     const logN = Math.log(node.visits + 1);
     let bestScore = -Infinity, bestChild = null;
-
-    for (const child of node.children) {
-      const Q = child.visits > 0 ? (child.wins / child.visits) : 0;
-      const U = this.explorationConstant * Math.sqrt(logN / (child.visits + 1e-8));
+    for (const c of node.children) {
+      const Q = c.visits > 0 ? c.wins / c.visits : 0;
+      const U = this.explorationConstant * Math.sqrt(logN / (c.visits + 1e-8));
       const score = Q + U;
       if (score > bestScore) {
-        bestScore  = score;
-        bestChild = child;
+        bestScore = score;
+        bestChild = c;
       }
     }
     return bestChild;
@@ -88,14 +86,13 @@ export class MCTSPure {
 
 class Node {
   constructor(state, parent = null, move = null) {
-    this.state    = state;     // QuoridorAdapter 인스턴스
+    this.state    = state;
     this.parent   = parent;
     this.move     = move;
     this.children = [];
     this.visits   = 0;
     this.wins     = 0;
   }
-
   isLeaf()     { return this.children.length === 0; }
   isTerminal(){ return this.state.isTerminal(); }
 }
