@@ -1,0 +1,32 @@
+{
+  "name": "mcts_api",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "common",
+    "ai_server",
+    "ai_trainer"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daseru0702/mcts_api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/daseru0702/mcts_api/issues"
+  },
+  "homepage": "https://github.com/daseru0702/mcts_api#readme",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "onnxruntime-node": "^1.21.1"
+  }
+}

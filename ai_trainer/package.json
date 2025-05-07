@@ -1,0 +1,13 @@
+{
+    "name": "ai_trainer_js",
+    "version": "1.0.0",
+    "type": "module",
+    "dependencies": {
+      "@tensorflow/tfjs-node": "^4.5.0",
+      "fs-extra": "^11.1.1"
+    },
+    "scripts": {
+      "train:quoridor": "node train.js quoridor"
+    }
+  }
+  

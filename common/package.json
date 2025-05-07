@@ -1,0 +1,14 @@
+{
+    "name": "mcts_api",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "workspaces": [
+        "common",
+        "ai_server",
+        "ai_trainer"
+    ],
+    "dependencies": {
+        "onnxruntime-node": "^1.15.0"
+    }
+}
