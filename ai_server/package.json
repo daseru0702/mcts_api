@@ -1,0 +1,11 @@
+{
+    "name": "quoridor-ai-server",
+    "version": "1.0.0",
+    "type": "module",
+    "dependencies": {
+        "body-parser": "^1.20.3",
+        "cors": "^2.8.5",
+        "express": "^4.21.2",
+        "onnxruntime-node": "^1.21.1"
+    }
+}
