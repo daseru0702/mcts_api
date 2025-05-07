@@ -6,7 +6,7 @@ import path from "path";
 // 게임 로직 및 MCTS 모듈 불러오기
 import { QuoridorGame } from "../client/games/quoridor/QuoridorGame.js";
 import { QuoridorAdapter } from "../ai_server/games/quoridor/QuoridorAdapter.js";
-import { MCTS } from "../common/mcts.js";
+import { MCTS } from "../common/mcts_pure.js";
 
 // 설정
 const NUM_GAMES = 100;         // 생성할 self-play 게임 수
@@ -66,6 +66,10 @@ async function main() {
 
       // 5) 최적 수 둔 뒤 게임 진행
       const mv = tree.bestMove();
+      if (!mv) {
+        console.warn("Warning: bestMove() returned null, terminating this game early.");
+        break;  // 더 이상 둘 수 있는 수가 없으면 현재 게임 종료
+      }
       game.applyMove(mv);
 
       // 6) 종결 조건 검사
