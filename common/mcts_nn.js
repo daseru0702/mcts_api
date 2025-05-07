@@ -44,11 +44,12 @@ export class MCTSNN {
 
   // state.getStateTensor() must return { data: Float32Array, shape: [1, C, H, W] }
   async evaluate(state, session) {
-    const { data, shape } = state.getStateTensor();
+    // Adapter.getStateTensor() 에서 모든 게임별 직렬화를 처리
+    const { data, shape } = state.getStateTensor();  
     const tensor = new ort.Tensor("float32", data, shape);
     const output = await session.run({ x: tensor });
-    const rawV  = output.value.data[0];          // in [-1,1]
-    return (rawV + 1) / 2;                       // scale to [0,1]
+    const rawV   = output.value.data[0];            // in [-1,1]
+    return (rawV + 1) / 2;                          // scale to [0,1]
   }
 
   backpropagate(path, value) {
