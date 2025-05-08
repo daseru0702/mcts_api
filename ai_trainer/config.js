@@ -7,7 +7,7 @@ export const GAMES = {
       policyOutputDim: 9*9 + 2*(8*9),
       selfplayFile:    "./data/quoridor_selfplay.json",
       modelDir:        "./models",
-      simLimit:        20,
+      simLimit:        200,
       epochs:          20,
       batchSize:       64,
       learningRate:    1e-3
