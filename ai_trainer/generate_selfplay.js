@@ -14,7 +14,7 @@ async function main() {
   }
   const cfg = GAMES[gameName];
   const numGames = cfg.selfPlayGames ?? 5;
-  const maxMoves = cfg.maxMoves     ?? 200;
+  const maxMoves = cfg.maxMoves      ?? 200;
 
   // 출력 디렉터리 준비
   const OUT_DIR = path.resolve("data");
