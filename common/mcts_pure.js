@@ -1,100 +1,72 @@
 // common/mcts_pure.js
 
-export class MCTSPure {
-  constructor(rootState, {
-    simulationLimit     = 200,
-    explorationConstant = Math.sqrt(2),
-  } = {}) {
-    this.root                = new Node(rootState);
-    this.simulationLimit     = simulationLimit;
-    this.explorationConstant = explorationConstant;
+import TreeNode from './TreeNode.js';
+
+export default class MCTSPure {
+  constructor(config) {
+    this.config = config;
   }
 
-  runSearch() {
-    for (let i = 0; i < this.simulationLimit; i++) {
-      const path = this.select(this.root);
-      const leaf = path[path.length - 1];
-
-      if (!leaf.state.isTerminal()) {
-        this.expand(leaf);
-      }
-
-      const value = this.simulate(leaf.state);
-      this.backpropagate(path, value);
+  runSearch(rootState) {
+    const root = new TreeNode(rootState);
+    for (let i = 0; i < this.config.simLimit; i++) {
+      const leaf = this.select(root);
+      const child = this.expand(leaf);
+      const result = this.simulate(child);
+      this.backpropagate(child, result);
     }
+    return root;
   }
 
   select(node) {
-    const path = [node];
-    while (!node.isLeaf()) {
-      const next = this.bestUCT(node);
-      if (!next) break;
-      node = next;
-      path.push(node);
+    while (node.untriedMoves.length === 0 && !node.state.isTerminal()) {
+      node = this.bestChild(node);
     }
-    return path;
+    return node;
   }
 
   expand(node) {
-    const moves = node.state.getPossibleMoves();
-    if (moves.length === 0) return;
-    // 한 번에 하나의 자식만 추가
-    const mv = moves.pop();
-    const nextState = node.state.clone().applyMove(mv);
-    node.children.push(new Node(nextState, node, mv));
+    if (node.untriedMoves.length === 0) return node;
+    const move = node.untriedMoves.pop();
+    const nextState = node.state.playMove(move);
+    const child = new TreeNode(nextState, node);
+    node.children.push(child);
+    return child;
   }
 
-  simulate(state) {
-    let s = state.clone();
-    while (!s.isTerminal()) {
-      const moves = s.getPossibleMoves();
-      const mv    = moves[Math.floor(Math.random() * moves.length)];
-      s = s.applyMove(mv);
+  simulate(node) {
+    let state = node.state.clone();
+    let depth = 0;
+    const maxDepth = this.config.maxMoves;
+    const seen = new Set();
+
+    while (!state.isTerminal() && depth < maxDepth) {
+      const moves = state.getPossibleMoves();
+      const m = moves[Math.floor(Math.random() * moves.length)];
+      state = state.playMove(m);
+      const key = state.toString();
+      if (seen.has(key)) break;
+      seen.add(key);
+      depth++;
     }
-    // 승리자 계산 (state.currentPlayer 관점)
-    const winner = (s.currentPlayer === state.currentPlayer) ? 2 : 1;
-    return (winner === state.currentPlayer) ? 1 : 0;
+
+    return state.getWinner(); // +1, -1, 0(draw)
   }
 
-  backpropagate(path, value) {
-    for (const n of path) {
+  backpropagate(node, result) {
+    let n = node;
+    while (n) {
       n.visits++;
-      n.wins += value;
+      n.wins += result;
+      n = n.parent;
     }
   }
 
-  bestMove() {
-    if (this.root.children.length === 0) return null;
-    return this.root.children
-      .reduce((a,b) => a.visits > b.visits ? a : b)
-      .move;
+  bestChild(node) {
+    return node.children.reduce((best, child) => {
+      const ucb1 = (child.wins / child.visits) +
+        this.config.c * Math.sqrt(Math.log(node.visits) / child.visits);
+      return ucb1 > best.score ? { node: child, score: ucb1 } : best;
+    }, { node: null, score: -Infinity }).node;
   }
-
-  bestUCT(node) {
-    const logN = Math.log(node.visits + 1);
-    let bestScore = -Infinity, bestChild = null;
-    for (const c of node.children) {
-      const Q = c.visits > 0 ? c.wins / c.visits : 0;
-      const U = this.explorationConstant * Math.sqrt(logN / (c.visits + 1e-8));
-      const score = Q + U;
-      if (score > bestScore) {
-        bestScore = score;
-        bestChild = c;
-      }
-    }
-    return bestChild;
-  }
-}
-
-class Node {
-  constructor(state, parent = null, move = null) {
-    this.state    = state;
-    this.parent   = parent;
-    this.move     = move;
-    this.children = [];
-    this.visits   = 0;
-    this.wins     = 0;
-  }
-  isLeaf()     { return this.children.length === 0; }
-  isTerminal(){ return this.state.isTerminal(); }
 }

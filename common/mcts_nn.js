@@ -1,100 +1,82 @@
 // common/mcts_nn.js
 
-import ort from "onnxruntime-node";
+import ort from 'onnxruntime-node';
+import TreeNode from './TreeNode.js';
 
-export class MCTSNN {
-  constructor(rootState, sessionPromise, {
-    simulationLimit     = 200,
-    explorationConstant = Math.sqrt(2),
-  } = {}) {
-    this.root                = new Node(rootState);
-    this.sessionPromise      = sessionPromise;
-    this.simulationLimit     = simulationLimit;
-    this.explorationConstant = explorationConstant;
+export default class MCTSNN {
+  constructor(config, modelPath) {
+    this.config = config;
+    this.modelPath = modelPath;
+    this.session = null;
   }
 
-  async runSearch() {
-    const session = await this.sessionPromise;
-    for (let i = 0; i < this.simulationLimit; i++) {
-      const path = this.select(this.root);
-      const leaf = path[path.length - 1];
-      if (!leaf.state.isTerminal()) this.expand(leaf);
-      const v = await this.evaluate(leaf.state, session);
-      this.backpropagate(path, v);
+  async init() {
+    this.session = await ort.InferenceSession.create(this.modelPath);
+  }
+
+  async runSearch(rootState) {
+    const root = new TreeNode(rootState);
+    const { policy: P, value: v0 } = await this.evaluate(rootState);
+    root.P = P;
+    root.untriedMoves = [];
+
+    for (let i = 0; i < this.config.simLimit; i++) {
+      const leaf = this.select(root);
+      const child = this.expand(leaf);
+      const { value } = await this.evaluate(child.state);
+      child.value = value;
+      this.backpropagate(child, value);
     }
+    return root;
   }
 
   select(node) {
-    const path = [node];
-    while (!node.isLeaf()) {
-      const next = this.bestUCT(node);
-      if (!next) break;
-      node = next;
-      path.push(node);
+    while (node.untriedMoves.length === 0 && !node.state.isTerminal()) {
+      node = this.bestChild(node);
     }
-    return path;
+    return node;
   }
 
   expand(node) {
-    const moves = node.state.getPossibleMoves();
-    if (moves.length === 0) return;
-    // 우선순위가 있을 경우, moves.shift() 혹은 pop() 으로 한 개만
-    const mv = moves.pop();
-    const nextState = node.state.clone().applyMove(mv);
-    node.children.push(new Node(nextState, node, mv));
+    if (!node.untriedMoves || node.untriedMoves.length === 0) {
+      node.untriedMoves = node.state.getPossibleMoves();
+    }
+    const move = node.untriedMoves.pop();
+    const nextState = node.state.playMove(move);
+    const child = new TreeNode(nextState, node);
+    child.P = node.P[move] || 1 / node.untriedMoves.length;
+    node.children.push(child);
+    return child;
   }
 
-  // state.getStateTensor() must return { data: Float32Array, shape: [1, C, H, W] }
-  async evaluate(state, session) {
-    // Adapter.getStateTensor() 에서 모든 게임별 직렬화를 처리
-    const { data, shape } = state.getStateTensor();  
-    const tensor = new ort.Tensor("float32", data, shape);
-    const output = await session.run({ x: tensor });
-    const rawV   = output.value.data[0];            // in [-1,1]
-    return (rawV + 1) / 2;                          // scale to [0,1]
+  simulate(node) {
+    return node.value;
   }
 
-  backpropagate(path, value) {
-    for (const n of path) {
+  async evaluate(state) {
+    const tensor = state.getStateTensor();
+    const feeds = { input: tensor };
+    const results = await this.session.run(feeds);
+    const policy = results.policy.data;
+    const value = results.value.data[0];
+    return { policy, value };
+  }
+
+  backpropagate(node, result) {
+    let n = node;
+    while (n) {
       n.visits++;
-      n.wins += value;
+      n.wins += result;
+      n = n.parent;
     }
   }
 
-  bestMove() {
-    if (this.root.children.length === 0) return null;
-    return this.root.children
-      .reduce((a,b) => a.visits > b.visits ? a : b)
-      .move;
+  bestChild(node) {
+    return node.children.reduce((best, child) => {
+      const U = child.P * Math.sqrt(node.visits) / (1 + child.visits);
+      const Q = child.wins / child.visits;
+      const score = Q + this.config.c_puct * U;
+      return score > best.score ? { node: child, score } : best;
+    }, { node: null, score: -Infinity }).node;
   }
-
-  bestUCT(node) {
-    const logN = Math.log(node.visits + 1);
-    let bestScore = -Infinity, bestChild = null;
-    for (const c of node.children) {
-      const Q = c.visits > 0 ? c.wins / c.visits : 0;
-      // include prior c.P if your adapter sets it
-      const U = this.explorationConstant * Math.sqrt(logN / (c.visits + 1e-8)) * (c.P ?? 1);
-      const score = Q + U;
-      if (score > bestScore) {
-        bestScore = score;
-        bestChild = c;
-      }
-    }
-    return bestChild;
-  }
-}
-
-class Node {
-  constructor(state, parent = null, move = null, prior = 1) {
-    this.state    = state;
-    this.parent   = parent;
-    this.move     = move;
-    this.children = [];
-    this.visits   = 0;
-    this.wins     = 0;
-    this.P        = prior;
-  }
-  isLeaf()     { return this.children.length === 0; }
-  isTerminal(){ return this.state.isTerminal(); }
 }
