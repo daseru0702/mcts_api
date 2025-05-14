@@ -36,10 +36,12 @@ export class MCTSPure {
   }
 
   expand(node) {
-    for (const mv of node.state.getPossibleMoves()) {
-      const nextState = node.state.clone().applyMove(mv);
-      node.children.push(new Node(nextState, node, mv));
-    }
+    const moves = node.getUntriedMoves();
+    if (moves.length === 0) return;
+    // 한 번에 하나의 자식만 추가
+    const mv = moves.pop();
+    const nextState = node.state.clone().applyMove(mv);
+    node.children.push(new Node(nextState, node, mv));
   }
 
   simulate(state) {

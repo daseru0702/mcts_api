@@ -36,10 +36,12 @@ export class MCTSNN {
   }
 
   expand(node) {
-    for (const mv of node.state.getPossibleMoves()) {
-      const nextState = node.state.clone().applyMove(mv);
-      node.children.push(new Node(nextState, node, mv));
-    }
+    const moves = node.getUntriedMoves();
+    if (moves.length === 0) return;
+    // 우선순위가 있을 경우, moves.shift() 혹은 pop() 으로 한 개만
+    const mv = moves.pop();
+    const nextState = node.state.clone().applyMove(mv);
+    node.children.push(new Node(nextState, node, mv));
   }
 
   // state.getStateTensor() must return { data: Float32Array, shape: [1, C, H, W] }
