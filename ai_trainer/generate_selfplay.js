@@ -62,12 +62,15 @@ async function main() {
         console.warn("  ⚠️ bestMove() returned null, 조기 종료");
         break;
       }
-    
+
       adapter.applyMove(mv);
       moveCount++;
       console.log(`  🕹 Move ${moveCount}:`, mv);
+      
+      // 5) 중간 데이터 기록
+      ws.write(JSON.stringify({ state: stateArray, pi }) + "\n");
 
-      // 5) 종료 검사
+      // 6) 종료 검사
       if (adapter.isTerminal()) {
         const lastPlayer = 3 - adapter.getCurrentPlayer();
         console.log(`  🏁 승자: Player ${lastPlayer}`);
@@ -77,14 +80,11 @@ async function main() {
         break;
       }
 
-      // 6) 수 제한 검사
+      // 7) 수 제한 검사
       if (moveCount >= maxMoves) {
         console.warn(`  ⚠️ moveCount >= ${maxMoves}, 강제 종료`);
         break;
       }
-
-      // 7) 중간 데이터 기록
-      ws.write(JSON.stringify({ state: stateArray, pi }) + "\n");
     }
 
     console.timeEnd(`Game ${g + 1} 소요`);
