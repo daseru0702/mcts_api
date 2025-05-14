@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { GAMES } from "./config.js";
 import { AdapterFactory } from "../common/AdapterFactory.js";
-import MCTS from "../common/mcts_pure.js";  // ← default import으로 변경
+import MCTS from "../common/mcts_pure.js";
 
 async function main() {
   const gameName = process.argv[2];
@@ -57,9 +57,7 @@ async function main() {
       const pi     = visits.map(v => v / total);
 
       // 4) best move
-      const mv = typeof root.bestMove === "function"
-        ? root.bestMove()
-        : null;
+      const mv = pickBestMove(root);
       if (!mv) {
         console.warn("  ⚠️ bestMove() returned null, 조기 종료");
         break;

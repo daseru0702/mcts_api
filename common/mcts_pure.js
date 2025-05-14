@@ -3,22 +3,14 @@
 import TreeNode from './TreeNode.js';
 
 export default class MCTSPure {
-  /**
-   * @param {object} opts
-   * @param {number} opts.simLimit  시뮬레이션 반복 수
-   * @param {number} opts.maxMoves  플레이아웃 최대 깊이 (draw 처리용)
-   * @param {number} [opts.c]       UCB 상수 (기본 Math.SQRT2)
-   */
   constructor({ simLimit, maxMoves, c = Math.SQRT2 }) {
     this.simLimit = simLimit;
     this.maxMoves = maxMoves;
     this.c = c;
   }
 
-  // rootAdapter는 Adapter 인스턴스여야 합니다.
   runSearch(rootAdapter) {
-    // 항상 clone()을 호출해서 상태를 복사
-    const root = new TreeNode(rootAdapter.clone());
+    const root = new TreeNode(rootAdapter.clone(), null, null);
     for (let i = 0; i < this.simLimit; i++) {
       const leaf = this.select(root);
       const child = this.expand(leaf);
@@ -38,12 +30,10 @@ export default class MCTSPure {
 
   expand(node) {
     if (node.untriedMoves.length === 0) return node;
-    // 한 수만 pop해서 확장
     const move = node.untriedMoves.pop();
-    // adapter.clone() 후 applyMove
     const childAdapter = node.state.clone();
     childAdapter.applyMove(move);
-    const child = new TreeNode(childAdapter, node);
+    const child = new TreeNode(childAdapter, node, move);
     node.children.push(child);
     return child;
   }
@@ -88,6 +78,15 @@ export default class MCTSPure {
       n.wins += result;
       n = n.parent;
     }
+  }
+
+  bestMove(root) {
+    if (root.children.length === 0) return null;
+    let best = root.children[0];
+    for (const child of root.children) {
+      if (child.visits > best.visits) best = child;
+    }
+    return best.move;
   }
 
   bestChild(node) {
