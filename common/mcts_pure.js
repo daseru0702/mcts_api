@@ -49,25 +49,37 @@ export default class MCTSPure {
   }
 
   simulate(node) {
-    // adapter.clone()을 이용해 상태 복제
+    // 시뮬레이션용 복제 어댑터
     const sim = node.state.clone();
+    // 시뮬레이션 시작 시점의 플레이어
+    const rootPlayer = sim.getCurrentPlayer();
     let depth = 0;
     const seen = new Set();
 
-    // 최대 깊이(maxMoves) 또는 종료 조건까지 랜덤 플레이아웃
+    // 최대 깊이까지 또는 종료 지점까지 무작위 플레이
     while (!sim.isTerminal() && depth < this.maxMoves) {
       const moves = sim.getPossibleMoves();
       const m = moves[Math.floor(Math.random() * moves.length)];
       sim.applyMove(m);
       const key = sim.toString();
-      if (seen.has(key)) break;
+      if (seen.has(key)) break;   // 반복 수순 방지
       seen.add(key);
       depth++;
     }
 
-    // 반드시 getWinner() 호출
-    return sim.getWinner();  // +1(승), -1(패), 0(무승부)
-  }
+    // 시뮬레이션 결과로 승패(또는 무승부) 결정
+    let z;
+    if (sim.isTerminal()) {
+      // 마지막으로 수를 둔 플레이어가 이긴 쪽
+      const winner = 3 - sim.getCurrentPlayer();
+      z = (winner === rootPlayer ? 1 : -1);
+    } else {
+      // 무승부(깊이 제한·사이클 종료)
+      z = 0;
+    }
+
+    return z;  // +1: rootPlayer 승, -1: 패, 0: 무승부
+  } 
 
   backpropagate(node, result) {
     let n = node;
