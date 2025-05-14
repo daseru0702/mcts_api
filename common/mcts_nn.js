@@ -36,7 +36,7 @@ export class MCTSNN {
   }
 
   expand(node) {
-    const moves = node.getUntriedMoves();
+    const moves = node.state.getPossibleMoves();
     if (moves.length === 0) return;
     // 우선순위가 있을 경우, moves.shift() 혹은 pop() 으로 한 개만
     const mv = moves.pop();

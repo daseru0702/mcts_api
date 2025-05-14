@@ -36,7 +36,7 @@ export class MCTSPure {
   }
 
   expand(node) {
-    const moves = node.getUntriedMoves();
+    const moves = node.state.getPossibleMoves();
     if (moves.length === 0) return;
     // 한 번에 하나의 자식만 추가
     const mv = moves.pop();
