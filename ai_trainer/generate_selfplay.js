@@ -57,11 +57,12 @@ async function main() {
       const pi     = visits.map(v => v / total);
 
       // 4) best move
-      const mv = pickBestMove(root);
+      const mv = mcts.bestMove(root);
       if (!mv) {
         console.warn("  ⚠️ bestMove() returned null, 조기 종료");
         break;
       }
+    
       adapter.applyMove(mv);
       moveCount++;
       console.log(`  🕹 Move ${moveCount}:`, mv);
