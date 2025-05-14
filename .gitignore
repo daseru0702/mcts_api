@@ -1,6 +1,2 @@
-\backup
-todo
 node_modules
 docs
-mermaid.md
-models\policy_value_net.py
