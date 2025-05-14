@@ -5,69 +5,65 @@ import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
 
-// 1) createRequire 로 CommonJS 및 ESM 빌드 모듈 모두 불러오기
+// CommonJS 로딩
 const require = createRequire(import.meta.url);
-const configModule         = require('./config.js');
-const adapterFactoryModule = require('../common/AdapterFactory.js');
 
-// 2) 로드된 모듈 확인 (실제 키 이름을 로그로 보고 확인하세요)
-console.log('⚙️ Loaded config module keys:', Object.keys(configModule));
-console.log('⚙️ Loaded AdapterFactory module keys:', Object.keys(adapterFactoryModule));
+// config.js 에서 GAMES 객체만 가져오기
+const { GAMES } = require('./config.js');
 
-// 3) config.js 에 simLimit, selfPlayGames, maxMoves, selfplayFile 등이 있으면 그대로,  
-//    아니라면 configModule.GAMES[gameName] 형태를 쓰도록 선택
-//    (아래는 configModule.GAMES 가 있을 때 예시)
-const GAMES = configModule.GAMES || null;
+// AdapterFactory.js 에서 named export 'AdapterFactory' 클래스 가져오기
+const AdapterFactoryModule = require('../common/AdapterFactory.js');
+const AdapterFactory = AdapterFactoryModule.AdapterFactory;
 
-// 4) AdapterFactory.create 또는 default export 함수 골라내기
-let createAdapter;
-if (typeof adapterFactoryModule === 'function') {
-  // module.exports = function createAdapter(...) 형태
-  createAdapter = adapterFactoryModule;
-} else if (typeof adapterFactoryModule.create === 'function') {
-  // exports.create = function(...) 형태
-  createAdapter = adapterFactoryModule.create;
-} else if (adapterFactoryModule.default && typeof adapterFactoryModule.default.create === 'function') {
-  // ESM default export class with static create()
-  createAdapter = adapterFactoryModule.default.create.bind(adapterFactoryModule.default);
-} else {
-  throw new Error('⚠️ AdapterFactory 모듈에서 생성 함수를 찾을 수 없습니다.');
+// 유틸 함수: adapter.initialState() 또는 adapter.initialState 프로퍼티 대응
+function getInitialState(adapter) {
+  return typeof adapter.initialState === 'function'
+    ? adapter.initialState()
+    : adapter.initialState;
 }
 
 async function main() {
   const gameName = process.argv[2];
-  if (!gameName) {
-    console.error('Usage: node generate_selfplay.js <gameName>');
+  if (!gameName || !GAMES[gameName]) {
+    console.error(
+      'Usage: node ai_trainer/generate_selfplay.js <gameName>\n' +
+      'Available games: ' + Object.keys(GAMES).join(', ')
+    );
     process.exit(1);
   }
-  // configModule.GAMES 사용 예
-  const gameConfig = GAMES ? GAMES[gameName] : configModule;
-  const { simLimit, selfPlayGames, maxMoves, selfplayFile } = gameConfig;
 
+  // 해당 게임 설정
+  const { simLimit, selfPlayGames, maxMoves, selfplayFile } = GAMES[gameName];
   console.log(`🔄 Self-play 시작: 게임=${gameName}, 시뮬레이션=${simLimit}, 판 수=${selfPlayGames}`);
 
+  // MCTS 인스턴스와 Adapter 생성
   const mcts    = new MCTS({ simLimit, selfPlayGames, maxMoves });
-  const adapter = createAdapter(gameName);
+  const adapter = AdapterFactory.create(gameName);
 
+  // 출력 파일 스트림 준비
   const outPath  = path.resolve(selfplayFile || `selfplay_${gameName}_${selfPlayGames}_${simLimit}.ndjson`);
   const outStream = fs.createWriteStream(outPath, { flags: 'w' });
 
   for (let i = 1; i <= selfPlayGames; i++) {
     console.log(`▶️ Game ${i}/${selfPlayGames} 시작`);
 
-    // adapter.initialState 가 함수인지, 프로퍼티인지 유연하게 처리
-    const rootState = typeof adapter.initialState === 'function'
-      ? adapter.initialState()
-      : adapter.initialState;
-
+    // 초기 상태 확보
+    const rootState = getInitialState(adapter);
+    // MCTS 탐색 실행
     const root = mcts.runSearch(rootState);
 
+    // π 계산 (방문 비율)
     const pi = root.children.map(c => c.visits / root.visits);
+    // z 계산 (최종 승패: +1/−1/0)
     const z  = root.state.getWinner();
+    // 상태 텐서
     const s  = root.state.getStateTensor();
 
+    // NDJSON로 한 줄 기록
     outStream.write(JSON.stringify({ state: s, pi, z }) + '\n');
-    console.log(`   Game ${i} 완료: pi=[${pi.map(p=>p.toFixed(2)).join(', ')}], z=${z}`);
+    console.log(
+      `   Game ${i} 완료: pi=[${pi.map(p => p.toFixed(2)).join(', ')}], z=${z}`
+    );
   }
 
   outStream.close();
