@@ -7,8 +7,8 @@ export const GAMES = {
       policyOutputDim: 9*9 + 2*(8*9),
       selfplayFile:    "./data/quoridor_selfplay.json",
       modelDir:        "./models",
-      simLimit:        20000,
-      selfPlayGames:   1,
+      simLimit:        2000,
+      selfPlayGames:   10,
       maxMoves:        200,    //한 판당 최대 수 제한
       epochs:          20,
       batchSize:       64,

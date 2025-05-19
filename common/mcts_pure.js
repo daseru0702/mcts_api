@@ -2,99 +2,108 @@
 
 import TreeNode from './TreeNode.js';
 
-export default class MCTSPure {
-  constructor({ simLimit, maxMoves, c = Math.SQRT2 }) {
-    this.simLimit = simLimit;
-    this.maxMoves = maxMoves;
-    this.c = c;
+export class MCTSPure {
+  /**
+   * @param {{ simulationLimit: number, maxMoves?: number }} opts
+   */
+  constructor(opts) {
+    this.simLimit = opts.simulationLimit;
+    // maxMoves는 선택적입니다. rollout 중 무한 루프 방지용
+    this.maxMoves = opts.maxMoves || Infinity;
+    this.C = Math.sqrt(2);
   }
 
-  runSearch(rootAdapter) {
-    const root = new TreeNode(rootAdapter.clone(), null, null);
+  /**
+   * MCTS 메인 루프: 루트 상태에서 시뮬레이션 simLimit번 반복
+   * @param {object} rootState – Adapter.clone() 한 인스턴스
+   * @returns {TreeNode} 루트 노드
+   */
+  runSearch(rootState) {
+    this.root = new TreeNode(rootState);
     for (let i = 0; i < this.simLimit; i++) {
-      const leaf = this.select(root);
-      const child = this.expand(leaf);
-      const result = this.simulate(child);
-      this.backpropagate(child, result);
+      // 1) selection & expansion
+      const node = this._select(this.root);
+      // 2) rollout
+      const result = this._simulate(node);
+      // 3) backpropagation
+      this._backpropagate(node, result);
     }
-    return root;
+    return this.root;
   }
 
-  select(node) {
-    // untriedMoves가 남아 있을 때까지 bestChild로만 내려갑니다.
-    while (node.untriedMoves.length === 0 && !node.state.isTerminal()) {
-      node = this.bestChild(node);
+  /** UCB1 기준으로 가장 확장할 노드로 내려갑니다. */
+  _select(node) {
+    while (!node.state.isTerminal()) {
+      if (node.untriedMoves.length > 0) {
+        return this._expand(node);
+      }
+      node = this._bestUCT(node);
     }
     return node;
   }
 
-  expand(node) {
-    if (node.untriedMoves.length === 0) return node;
-    const move = node.untriedMoves.pop();
-    const childAdapter = node.state.clone();
-    childAdapter.applyMove(move);
-    const child = new TreeNode(childAdapter, node, move);
+  /** 미확장 자식 하나를 뽑아서 생성합니다. */
+  _expand(node) {
+    const moves = node.untriedMoves;
+    const idx = Math.floor(Math.random() * moves.length);
+    const move = moves.splice(idx, 1)[0];
+    const nextState = node.state.clone();
+    nextState.applyMove(move);
+    const child = new TreeNode(nextState, node, move);
     node.children.push(child);
     return child;
   }
 
-  simulate(node) {
-    // 시뮬레이션용 복제 어댑터
-    const sim = node.state.clone();
-    // 시뮬레이션 시작 시점의 플레이어
-    const rootPlayer = sim.getCurrentPlayer();
-    let depth = 0;
-    const seen = new Set();
+  /** UCT 계산해서 자식 중 최고 점수 노드를 반환합니다. */
+  _bestUCT(node) {
+    return node.children.reduce((best, c) => {
+      const uct = (c.wins / c.visits)
+                + this.C * Math.sqrt(Math.log(node.visits) / c.visits);
+      return uct > best.uct ? { node: c, uct } : best;
+    }, { node: null, uct: -Infinity }).node;
+  }
 
-    // 최대 깊이까지 또는 종료 지점까지 무작위 플레이
-    while (!sim.isTerminal() && depth < this.maxMoves) {
-      const moves = sim.getPossibleMoves();
-      const m = moves[Math.floor(Math.random() * moves.length)];
-      sim.applyMove(m);
-      const key = sim.toString();
-      if (seen.has(key)) break;   // 반복 수순 방지
-      seen.add(key);
-      depth++;
+  /**
+   * Rollout: 임의로 플레이하다가 터미널 상태가 되면 승자를 반환
+   * @param {TreeNode} node
+   * @returns {number} 승자 플레이어 번호 (1 또는 2)
+   */
+  _simulate(node) {
+    const state = node.state.clone();
+    let moves = 0;
+    while (!state.isTerminal() && moves < this.maxMoves) {
+      const pm = state.getPossibleMoves();
+      const mv = pm[Math.floor(Math.random() * pm.length)];
+      state.applyMove(mv);
+      moves++;
     }
+    // 터미널: 현재 차례인 플레이어가 못 두는 상태이므로,
+    // 마지막에 둔 플레이어가 승자입니다.
+    // state.getCurrentPlayer()는 "다음" 차례이므로 3 - current 가 바로 승자.
+    return 3 - state.getCurrentPlayer();
+  }
 
-    // 시뮬레이션 결과로 승패(또는 무승부) 결정
-    let z;
-    if (sim.isTerminal()) {
-      // 마지막으로 수를 둔 플레이어가 이긴 쪽
-      const winner = 3 - sim.getCurrentPlayer();
-      z = (winner === rootPlayer ? 1 : -1);
-    } else {
-      // 무승부(깊이 제한·사이클 종료)
-      z = 0;
-    }
-
-    return z;  // +1: rootPlayer 승, -1: 패, 0: 무승부
-  } 
-
-  backpropagate(node, result) {
-    let n = node;
-    while (n) {
-      n.visits++;
-      n.wins += result;
-      n = n.parent;
+  /** 시뮬레이션 결과를 루트부터 node까지 전파합니다. */
+  _backpropagate(node, winner) {
+    while (node) {
+      node.visits += 1;
+      // node.parent.state.getCurrentPlayer()가 이 노드를 만든 시점의 플레이어
+      const player = node.parent ? node.parent.state.getCurrentPlayer() : null;
+      if (player === winner) {
+        node.wins += 1;
+      }
+      node = node.parent;
     }
   }
 
-  bestMove(root) {
-    if (root.children.length === 0) return null;
-    let best = root.children[0];
-    for (const child of root.children) {
-      if (child.visits > best.visits) best = child;
-    }
-    return best.move;
-  }
-
-  bestChild(node) {
-    return node.children.reduce((best, child) => {
-      const Q = child.wins / child.visits;
-      const U = this.c * Math.sqrt(Math.log(node.visits) / child.visits);
-      const score = Q + U;
-      return score > best.score ? { node: child, score } : best;
-    }, { node: null, score: -Infinity }).node;
+  /**
+   * 최종 행동 선택: 방문 수(visits)가 가장 많은 자식의 move를 반환
+   * @param {TreeNode} root
+   */
+  bestMove(root = this.root) {
+    if (!root.children.length) return null;
+    return root.children.reduce((best, c) => {
+      return c.visits > best.visits ? c : best;
+    }, root.children[0]).move;
   }
 }
