@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { GAMES } from './config.js';
+import { GAMES } from '../common/config.js';
 import { AdapterFactory } from '../common/AdapterFactory.js';
 import { MCTSPure } from '../common/mcts_pure.js';
 

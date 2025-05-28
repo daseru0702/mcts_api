@@ -5,7 +5,8 @@
   "workspaces": [
     "common",
     "ai_server",
-    "ai_trainer"
+    "ai_trainer",
+    "games"
   ],
   "main": "index.js",
   "scripts": {

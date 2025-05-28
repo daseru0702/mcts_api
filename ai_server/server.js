@@ -5,7 +5,7 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import path from "path";
 import ort from "onnxruntime-node";
-import { GAMES } from "../ai_trainer/config.js";
+import { GAMES } from "../common/config.js";
 import { AdapterFactory } from "../common/AdapterFactory.js";
 import { MCTSNN } from "../common/mcts_nn.js";
 

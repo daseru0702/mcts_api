@@ -1,13 +1,13 @@
-// ai_trainer/config.js
+// common/config.js
 
 export const GAMES = {
     quoridor: {
       inChannels:      4,
       boardSize:       9,
       policyOutputDim: 9*9 + 2*(8*9),
-      selfplayFile:    "./data/quoridor_selfplay.json",
+      selfplayFile:    "../ai_trainer/data/quoridor_selfplay.json",
       modelDir:        "./models",
-      simLimit:        2000,
+      simLimit:        200,
       selfPlayGames:   10,
       maxMoves:        200,    //한 판당 최대 수 제한
       epochs:          20,

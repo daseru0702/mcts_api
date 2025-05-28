@@ -3,7 +3,7 @@
 import fs from "fs-extra";
 import * as tf from "@tensorflow/tfjs-node";
 import path from "path";
-import { GAMES } from "./config.js";
+import { GAMES } from "../common/config.js";
 
 function buildModel(cfg) {
   const { inChannels, boardSize, policyOutputDim } = cfg;
