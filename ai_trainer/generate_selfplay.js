@@ -19,11 +19,11 @@ async function main() {
   const outPath = path.join(OUT_DIR, `${gameName}_selfplay.ndjson`);
   const ws = fs.createWriteStream(outPath, { flags: 'w' });
 
-  console.log(`🔄 Self-play 시작: 게임=${gameName}, 시뮬레이션=${cfg.simLimit}, 판 수=${numGames}`);
+  console.log(`Self-play 시작: 게임=${gameName}, 시뮬레이션=${cfg.simLimit}, 판 수=${numGames}`);
   console.time('총 self-play 시간');
 
   for (let g = 0; g < numGames; g++) {
-    console.log(`\n▶️ Game ${g + 1}/${numGames} 시작`);
+    console.log(`\n▶ Game ${g + 1}/${numGames} 시작`);
     console.time(`Game ${g + 1} 소요`);
 
     const adapter = await AdapterFactory.create(gameName, null);
@@ -41,24 +41,24 @@ async function main() {
 
       const mv = mcts.bestMove(root);
       if (!mv) {
-        console.warn('  ⚠️ bestMove() returned null, 조기 종료');
+        console.warn('  bestMove() returned null, 조기 종료');
         break;
       }
       adapter.applyMove(mv);
       moveCount++;
-      console.log(`  🕹 Move ${moveCount}:`, mv);
+      console.log(`  Move ${moveCount}:`, mv);
 
       // 기록
       const record = { state: stateArray, pi };
       if (adapter.isTerminal()) {
         const lastPlayer = 3 - adapter.getCurrentPlayer();
         record.z = lastPlayer;
-        console.log(`  🏁 승자: Player ${lastPlayer}`);
+        console.log(`  승자: Player ${lastPlayer}`);
         ws.write(JSON.stringify(record) + '\n');
         break;
       }
       if (moveCount >= maxMoves) {
-        console.warn(`  ⚠️ moveCount >= ${maxMoves}, 강제 종료`);
+        console.warn(`  moveCount >= ${maxMoves}, 강제 종료`);
         ws.write(JSON.stringify(record) + '\n');
         break;
       }
@@ -69,7 +69,7 @@ async function main() {
   }
 
   ws.end(() => {
-    console.log(`\n✅ NDJSON self-play 파일 생성 완료: ${outPath}`);
+    console.log(`\n NDJSON self-play 파일 생성 완료: ${outPath}`);
     console.timeEnd('총 self-play 시간');
   });
 }

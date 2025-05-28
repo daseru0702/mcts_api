@@ -9,7 +9,7 @@ export class AdapterFactory {
       switch (gameName) {
         case "quoridor": {
           const { QuoridorAdapter } = await import(
-            "../ai_server/games/quoridor/QuoridorAdapter.js"
+            "../games/quoridor/QuoridorAdapter.js"
           );
           return new QuoridorAdapter(stateJson);
         }
