@@ -1,4 +1,4 @@
-// client/games/quoridor/QuoridorGame.js
+// games/quoridor/QuoridorGame.js
 
 export class QuoridorGame {
   constructor() {
