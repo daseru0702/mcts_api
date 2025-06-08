@@ -53,14 +53,36 @@ function buildModel(cfg) {
 }
 
 async function loadData(gameName) {
-  const cfg = GAMES[gameName];
-  const raw = await fs.readJson(path.resolve("data", `${gameName}_selfplay.json`));
-  return {
-    states:   tf.tensor(raw.states,   undefined, "float32"),
-    policies: tf.tensor(raw.policies, undefined, "float32"),
-    values:   tf.tensor(raw.values,   undefined, "float32")
-  };
+  const cfg  = GAMES[gameName];
+  const file = path.resolve("data", `${gameName}_selfplay.ndjson`);
+  const text = await fs.readFile(file, "utf8");
+  const lines = text.trim().split("\n");
+  const N = lines.length;
+
+  // 1) Float32Array 로 flat 버퍼를 준비합니다.
+  const stateSize  = cfg.inChannels * cfg.boardSize * cfg.boardSize;
+  const polSize    = cfg.policyOutputDim;
+  const rawStates  = new Float32Array(N * stateSize);
+  const rawPols    = new Float32Array(N * polSize);
+  const rawValues  = new Float32Array(N);
+
+  // 2) 각 줄(JSON) 파싱해서 flat 버퍼에 채워 넣기
+  for (let i = 0; i < N; i++) {
+    const { state, pi, z } = JSON.parse(lines[i]);
+    rawStates.set(state, i * stateSize);
+    rawPols.set(pi,     i * polSize);
+    // z가 1 또는 2로 저장돼 있다면 1->+1, 2->-1 같은 식으로 바꿔주세요.
+    rawValues[i] = z != null ? (z === 1 ? 1 : -1) : 0;
+  }
+
+  // 3) 올바른 shape 으로 텐서 생성
+  const states   = tf.tensor4d(rawStates, [N, cfg.inChannels, cfg.boardSize, cfg.boardSize], "float32");
+  const policies = tf.tensor2d(rawPols,   [N, cfg.policyOutputDim],                             "float32");
+  const values   = tf.tensor2d(rawValues, [N, 1],                                              "float32");
+
+  return { states, policies, values };
 }
+
 
 async function main() {
   const gameName = process.argv[2];

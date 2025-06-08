@@ -1,4 +1,5 @@
 // merge.js
+// self-play된 .ndjson 파일을 .json으로 변환하기 위해 사용합니다. 
 import fs from 'fs';
 
 // 1) 합친 ndjson 파일 읽기

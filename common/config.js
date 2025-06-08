@@ -10,7 +10,7 @@ export const GAMES = {
       modelDir:        "./models",
       simLimit:        1000,
       selfPlayGames:   500,
-      maxMoves:        200,    //한 판당 최대 수 제한
+      maxMoves:        200,
       epochs:          20,
       batchSize:       64,
       learningRate:    1e-3
