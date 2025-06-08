@@ -20,10 +20,20 @@ async function main() {
   const maxMoves  = cfg.maxMoves || 200;
 
   // 출력 디렉터리 준비
+  // data 디렉토리 생성
   const outDir = path.resolve(process.cwd(), 'data');
   await fs.promises.mkdir(outDir, { recursive: true });
-  const outPath = path.join(outDir, `${gameName}_selfplay.ndjson`);
+  
+  // --out=sp2.json 같은 플래그 파싱
+  const outFlag = process.argv.find(arg => arg.startsWith('--out='));
+  const outName = outFlag
+    ? outFlag.split('=')[1]
+    : `${gameName}_selfplay.ndjson`;
+  
+  // outPath와 writeStream 설정
+  const outPath = path.join(outDir, outName);
   const ws = fs.createWriteStream(outPath, { flags: 'w' });
+
 
   console.log(`🔄 Self-play 시작: 게임=${gameName}, 시뮬레이션=${simLimit}, 판 수=${numGames}`);
 
@@ -31,9 +41,8 @@ async function main() {
     console.log(`\n▶️ Game ${g + 1}/${numGames} 시작`);
     console.time(`Game ${g + 1} 소요`);
 
-    // ★ 여기서 AdapterFactory.create가 config.js의 adapter 경로를 사용합니다
     const adapter = await AdapterFactory.create(gameName);
-    const mcts    = new MCTSPure({ simLimit, maxMoves });
+    const mcts    = new MCTSPure({ simulationLimit: simLimit, maxMoves: maxMoves });
 
     let moveCount = 0;
     while (true) {

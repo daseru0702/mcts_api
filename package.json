@@ -2,6 +2,7 @@
   "name": "mcts_api",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "common",
     "ai_server",
@@ -25,6 +26,7 @@
   "homepage": "https://github.com/daseru0702/mcts_api#readme",
   "description": "",
   "dependencies": {
+    "@tensorflow/tfjs-node-gpu": "^4.22.0",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",

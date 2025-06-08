@@ -1,7 +1,8 @@
 // ai_trainer/train.js
 
 import fs from "fs-extra";
-import * as tf from "@tensorflow/tfjs-node";
+//import * as tf from "@tensorflow/tfjs-node";
+import * as tf from "@tensorflow/tfjs-node-gpu";
 import path from "path";
 import { GAMES } from "../common/config.js";
 
