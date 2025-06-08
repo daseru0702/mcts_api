@@ -52,6 +52,7 @@ function buildModel(cfg) {
   return tf.model({ inputs: input, outputs: [policyOut, valueOut] });
 }
 
+// 세대가 늘어날 때마다 파일명을 다르게 만들었다면, path.resolve의 파일명을 수정해야합니다.
 async function loadData(gameName) {
   const cfg  = GAMES[gameName];
   const file = path.resolve("data", `${gameName}_selfplay.ndjson`);
