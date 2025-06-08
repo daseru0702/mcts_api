@@ -117,7 +117,7 @@ async function main() {
   });
 
   const outDir = path.resolve(cfg.modelDir, gameName);
-  await model.save(`file://${outDir}`);
+  await model.save(`file://${path.join(outDir, 'saved_model')}`);
   console.log(`Model saved to ${outDir}`);
 }
 
