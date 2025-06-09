@@ -85,7 +85,6 @@ async function loadData(gameName) {
   return { states, policies, values };
 }
 
-
 async function main() {
   const gameName = process.argv[2];
   if (!GAMES[gameName]) {
@@ -94,50 +93,52 @@ async function main() {
   }
   const cfg = GAMES[gameName];
 
-  console.log(`Loading data for ${gameName}...`);
+  console.log(`Loading data for ${gameName}…`);
   const { states, policies, values } = await loadData(gameName);
 
-  console.log("Building model…");
+  console.log("Building & compiling model…");
   const model = buildModel(cfg);
   model.compile({
     optimizer: tf.train.adam(cfg.learningRate),
     loss: {
       policy: tf.losses.softmaxCrossEntropy,
-      value:  tf.losses.meanSquaredError
+      value: tf.losses.meanSquaredError
     },
     lossWeights: { policy: 1, value: 1 }
   });
 
   console.log("Training…");
   await model.fit(states, { policy: policies, value: values }, {
-    epochs:    cfg.epochs,
+    epochs: cfg.epochs,
     batchSize: cfg.batchSize,
-    callbacks: {
-      onEpochEnd: (_, logs) => console.log(`loss=${logs.loss.toFixed(4)}`)
-    }
+    callbacks: { onEpochEnd: (_, logs) => console.log(`loss=${logs.loss.toFixed(4)}`) }
   });
 
+  // 1) TFJS-Layers 모델도 저장
   const outDir = path.resolve(cfg.modelDir, gameName);
-  await model.save(`file://${outDir}`, { format: 'tf' });
-  console.log(`TF SavedModel 저장 완료: ${outDir}`);
+  await fs.ensureDir(outDir);
+  await model.save(`file://${outDir}/tfjs_model`);  
+  console.log(`✔ TFJS-Layers 모델 저장 완료: ${outDir}\\tfjs_model`);
 
-  // 1) TF-JS Layers 모델 → TensorFlow SavedModel 변환
-  console.log('▶ TF-JS Layers → SavedModel 변환 중…');
-  const jsonPath = path.join(outDir, 'model.json');           // tfjs 모델 메타
-  const savedModelDir = path.join(outDir, 'saved_model');     // 생성 디렉토리
+  // 2) Python tensorflowjs_converter 로 SavedModel 생성
+  console.log("▶ TFJS-Layers → TensorFlow SavedModel 변환 중…");
+  const jsonPath       = path.join(outDir, "tfjs_model", "model.json");
+  const savedModelDir  = path.join(outDir, "saved_model");
   execSync(
-    `npx @tensorflow/tfjs-converter --input_format=tfjs_layers_model --output_format=tf_saved_model "${jsonPath}" "${savedModelDir}"`,
-    { stdio: 'inherit', shell: true }
+    `python -m tensorflowjs_converter --input_format=tfjs_layers_model \
+     --output_format=tf_saved_model \
+     "${jsonPath}" "${savedModelDir}"`,
+    { stdio: "inherit", shell: true }
   );
-  
-  // 2) Python 스크립트로 ONNX 변환
-  console.log('▶ SavedModel → ONNX 변환 중…');
+  console.log(`✔ SavedModel 생성 완료: ${savedModelDir}`);
+
+  // 3) Python tf2onnx 스크립트로 ONNX 생성
+  console.log("▶ SavedModel → ONNX 변환 중…");
   execSync(
     `python convert_to_onnx.py ${gameName}`,
-    { stdio: 'inherit', shell: true }
+    { stdio: "inherit", shell: true }
   );
-
-  console.log('✅ 전체 변환 완료');
+  console.log("✅ 전체 변환 완료");
 }
 
 main().catch(err => {
