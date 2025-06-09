@@ -31,5 +31,8 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "onnxruntime-node": "^1.21.1"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs-converter": "^4.22.0"
   }
 }

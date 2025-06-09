@@ -1,52 +1,45 @@
-#!/usr/bin/env python3
-import argparse
-import os
-import tf2onnx
+#!/usr/bin/env python
+# convert_to_onnx.py
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Convert a TensorFlow SavedModel to ONNX format"
-    )
-    parser.add_argument(
-        "game",
-        help="Game name (e.g. quoridor) — used to derive default paths"
-    )
-    parser.add_argument(
-        "-s", "--saved_model_dir",
-        help="Path to the TensorFlow SavedModel directory"
-    )
-    parser.add_argument(
-        "-o", "--output_onnx",
-        help="Path for the output ONNX file"
-    )
-    parser.add_argument(
-        "--opset",
-        type=int,
-        default=13,
-        help="ONNX opset version (default: 13)"
-    )
-    return parser.parse_args()
+import argparse, os, subprocess, sys
 
 def main():
-    args = parse_args()
-
-    # 기본 경로: models/<game>/saved_model, models/<game>/model.onnx
-    saved_model_dir = args.saved_model_dir or os.path.join("models", args.game, "saved_model")
-    output_onnx     = args.output_onnx     or os.path.join("models", args.game, "model.onnx")
-
-    if not os.path.isdir(saved_model_dir):
-        raise FileNotFoundError(f"SavedModel 디렉터리를 찾을 수 없습니다: {saved_model_dir}")
-
-    os.makedirs(os.path.dirname(output_onnx), exist_ok=True)
-
-    print(f"▶ 변환 시작: {saved_model_dir} → {output_onnx} (opset {args.opset})")
-    # 실제 변환
-    model_proto, _ = tf2onnx.convert.from_saved_model(
-        saved_model_dir,
-        opset=args.opset,
-        output_path=output_onnx
+    parser = argparse.ArgumentParser(
+        description="Convert TensorFlow SavedModel to ONNX"
     )
-    print("✅ 변환 완료:", output_onnx)
+    parser.add_argument('gameName',
+        help='게임 이름 (config.js의 key와 동일)')
+    parser.add_argument('-s','--saved-model',
+        default="models/{gameName}/saved_model",
+        help='SavedModel 디렉토리 (default: models/<gameName>/saved_model)')
+    parser.add_argument('-o','--output',
+        default="models/{gameName}/model.onnx",
+        help='ONNX 출력 경로 (default: models/<gameName>/model.onnx)')
+    parser.add_argument('--opset', type=int, default=13,
+        help='ONNX opset 버전 (default:13)')
+    args = parser.parse_args()
+
+    saved_dir = args.saved_model.format(gameName=args.gameName)
+    out_path  = args.output.format(gameName=args.gameName)
+
+    if not os.path.isdir(saved_dir):
+        print(f"❌ SavedModel 디렉토리를 찾을 수 없습니다: {saved_dir}")
+        sys.exit(1)
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+
+    cmd = [
+        sys.executable, '-m', 'tf2onnx.convert',
+        '--saved-model', saved_dir,
+        '--output',      out_path,
+        '--opset',       str(args.opset),
+    ]
+    print("🔄 변환 시작:", " ".join(cmd))
+    res = subprocess.run(cmd)
+    if res.returncode != 0:
+        print("❌ ONNX 변환 실패")
+        sys.exit(res.returncode)
+
+    print(f"✅ ONNX 모델 저장 완료: {out_path}")
 
 if __name__ == "__main__":
     main()

@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import * as tf from "@tensorflow/tfjs-node-gpu";
 import path from "path";
 import { GAMES } from "../common/config.js";
+import { execSync } from 'child_process';
 
 function buildModel(cfg) {
   const { inChannels, boardSize, policyOutputDim } = cfg;
@@ -71,15 +72,15 @@ async function loadData(gameName) {
   for (let i = 0; i < N; i++) {
     const { state, pi, z } = JSON.parse(lines[i]);
     rawStates.set(state, i * stateSize);
-    rawPols.set(pi,     i * polSize);
+    rawPols.set(pi,      i * polSize);
     // z가 1 또는 2로 저장돼 있다면 1->+1, 2->-1 같은 식으로 바꿔주세요.
     rawValues[i] = z != null ? (z === 1 ? 1 : -1) : 0;
   }
 
   // 3) 올바른 shape 으로 텐서 생성
   const states   = tf.tensor4d(rawStates, [N, cfg.inChannels, cfg.boardSize, cfg.boardSize], "float32");
-  const policies = tf.tensor2d(rawPols,   [N, cfg.policyOutputDim],                             "float32");
-  const values   = tf.tensor2d(rawValues, [N, 1],                                              "float32");
+  const policies = tf.tensor2d(rawPols,   [N, cfg.policyOutputDim],                          "float32");
+  const values   = tf.tensor2d(rawValues, [N, 1],                                            "float32");
 
   return { states, policies, values };
 }
@@ -96,7 +97,7 @@ async function main() {
   console.log(`Loading data for ${gameName}...`);
   const { states, policies, values } = await loadData(gameName);
 
-  console.log("Building model...");
+  console.log("Building model…");
   const model = buildModel(cfg);
   model.compile({
     optimizer: tf.train.adam(cfg.learningRate),
@@ -107,7 +108,7 @@ async function main() {
     lossWeights: { policy: 1, value: 1 }
   });
 
-  console.log("Training...");
+  console.log("Training…");
   await model.fit(states, { policy: policies, value: values }, {
     epochs:    cfg.epochs,
     batchSize: cfg.batchSize,
@@ -117,11 +118,29 @@ async function main() {
   });
 
   const outDir = path.resolve(cfg.modelDir, gameName);
-  await model.save(`file://${path.join(outDir, 'saved_model')}`);
-  console.log(`Model saved to ${outDir}`);
+  await model.save(`file://${outDir}`, { format: 'tf' });
+  console.log(`TF SavedModel 저장 완료: ${outDir}`);
+
+  // 1) TF-JS Layers 모델 → TensorFlow SavedModel 변환
+  console.log('▶ TF-JS Layers → SavedModel 변환 중…');
+  const jsonPath = path.join(outDir, 'model.json');           // tfjs 모델 메타
+  const savedModelDir = path.join(outDir, 'saved_model');     // 생성 디렉토리
+  execSync(
+    `npx @tensorflow/tfjs-converter --input_format=tfjs_layers_model --output_format=tf_saved_model "${jsonPath}" "${savedModelDir}"`,
+    { stdio: 'inherit', shell: true }
+  );
+  
+  // 2) Python 스크립트로 ONNX 변환
+  console.log('▶ SavedModel → ONNX 변환 중…');
+  execSync(
+    `python convert_to_onnx.py ${gameName}`,
+    { stdio: 'inherit', shell: true }
+  );
+
+  console.log('✅ 전체 변환 완료');
 }
 
-main().catch(e => {
-  console.error(e);
+main().catch(err => {
+  console.error(err);
   process.exit(1);
 });
