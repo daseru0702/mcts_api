@@ -163,4 +163,25 @@ export class QuoridorGame {
   inBounds(x, y) {
     return x >= 0 && x < this.boardSize && y >= 0 && y < this.boardSize;
   }
+
+  toJSON() {
+    return {
+      boardSize:      this.boardSize,
+      pawns:          this.pawns,
+      wallCounts:     this.wallCounts,
+      placedWalls:    this.placedWalls,
+      currentPlayer:  this.currentPlayer
+    };
+  }
+  
+  /** fromJSON 으로 복원 */
+  static fromJSON(json) {
+    const g = new QuoridorGame();
+    g.boardSize     = json.boardSize;
+    g.pawns         = { ...json.pawns };
+    g.wallCounts    = { ...json.wallCounts };
+    g.placedWalls   = json.placedWalls.map(w => ({ ...w }));
+    g.currentPlayer = json.currentPlayer;
+    return g;
+  }
 }

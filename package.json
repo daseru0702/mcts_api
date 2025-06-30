@@ -26,6 +26,7 @@
   "homepage": "https://github.com/daseru0702/mcts_api#readme",
   "description": "",
   "dependencies": {
+    "@tensorflow/tfjs-node": "^4.22.0",
     "@tensorflow/tfjs-node-gpu": "^4.22.0",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",

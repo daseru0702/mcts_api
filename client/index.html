@@ -1,23 +1,27 @@
+<!-- client/index.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <title>Quoridor AI</title>
   <style>
-    body { display: flex; height: 100vh; margin: 0; }
-    canvas { margin: auto; background: #805817; }
+    /* 캔버스 가운데 정렬 + 보더 */
+    #gameCanvas {
+      display: block;
+      margin: 40px auto;
+      background: #fff;
+      border: 2px solid #333;
+    }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
 
   <script type="module">
-    import { QuoridorGame } from "../games/quoridor/QuoridorGame.js";
-    import { GameController } from "../games/quoridor/controller.js";
+    import { GameController } from '/games/quoridor/controller.js';
 
-    const canvas = document.getElementById("gameCanvas");
-    const game   = new QuoridorGame();
-    new GameController(canvas, game);
+    const canvas = document.getElementById('gameCanvas');
+    new GameController(canvas);
   </script>
 </body>
 </html>

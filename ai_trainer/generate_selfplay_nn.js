@@ -4,7 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { GAMES } from '../common/config.js';
 import { AdapterFactory } from '../common/AdapterFactory.js';
-import { MCTSnn } from '../common/mcts_nn.js';
+// import { MCTSnn } from '../common/mcts_nn.js';
+import { MCTSTFJS } from '../common/mcts_tfjs.js';
 
 async function main() {
   const [,, gameName, simArg, gamesArg] = process.argv;
@@ -31,9 +32,10 @@ async function main() {
   console.log(`🔄 NN-based Self-play 시작: 게임=${gameName}, 시뮬레이션=${simLimit}, 판 수=${numGames}`);
 
   // 준비: AdapterFactory + MCTSnn 초기화
-  const mcts = new MCTSnn(
+  const mcts = new MCTSTFJS(
     { simulationLimit: simLimit, maxMoves: maxMoves, c_puct: cfg.c_puct },
-    path.resolve(cfg.modelDir, gameName, 'model.onnx')
+    // path.resolve(cfg.modelDir, gameName, 'model.onnx')
+    path.resolve(cfg.modelDir, gameName, 'tfjs_model')
   );
   await mcts.init();
 
