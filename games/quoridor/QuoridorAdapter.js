@@ -108,50 +108,73 @@ export class QuoridorAdapter {
   
 
   // 서버: flat array → TensorFlow 텐서 → QuoridorGame 상태로 복원
-  setStateFromArray(flatArr) {
-    const N = this.game.boardSize;
-    const C = flatArr.length / (N * N);  // 채널 수
-    if (flatArr.length !== 4 * N * N) {
-      throw new Error(`flatArr 길이 불일치: expected ${4*N*N}, got ${flatArr.length}`);
+  setStateFromArray(flatArr, currentPlayer = null, wallCounts = null) {
+    const data = Array.from(flatArr);
+    const N    = this.game.boardSize;
+    if (data.length !== 4 * N * N) {
+      throw new Error(`flatArr 길이 불일치: expected ${4 * N * N}, got ${data.length}`);
     }
 
-    // 채널별로 분리
-    const [c0, c1, c2, c3] = [
-      flatArr.slice(0,   N*N),
-      flatArr.slice(N*N, 2*N*N),
-      flatArr.slice(2*N*N, 2*N*N + (N-1)*N),
-      flatArr.slice(2*N*N + (N-1)*N)
-    ];
+    const channelSize = N * N;
+    const c0 = data.slice(0, channelSize);
+    const c1 = data.slice(channelSize, 2 * channelSize);
+    const c2 = data.slice(2 * channelSize, 3 * channelSize);
+    const c3 = data.slice(3 * channelSize);
 
-    // 플레이어 위치 복원
-    this.game.pawns[1] = { x: c0.findIndex(v => v===1) % N,
-                           y: Math.floor(c0.findIndex(v => v===1) / N) };
-    this.game.pawns[2] = { x: c1.findIndex(v => v===1) % N,
-                           y: Math.floor(c1.findIndex(v => v===1) / N) };
+    const p1Idx = c0.findIndex(v => v === 1);
+    const p2Idx = c1.findIndex(v => v === 1);
+    if (p1Idx === -1 || p2Idx === -1) {
+      throw new Error('플레이어 위치 복원 실패');
+    }
 
-    // 벽 복원
+    // 기본 상태로 초기화한 뒤 복원합니다.
+    this.game = new QuoridorGame();
+    this.game.pawns[1] = { x: p1Idx % N, y: Math.floor(p1Idx / N) };
+    this.game.pawns[2] = { x: p2Idx % N, y: Math.floor(p2Idx / N) };
+
     this.game.placedWalls = [];
-    // 가로
+    const cpSize = N - 1;
+    this.game.crossPoints = Array.from({ length: cpSize }, () => Array(cpSize).fill(false));
+    this.game.nodes = Array.from({ length: N }, (_, x) =>
+      Array.from({ length: N }, (_, y) => ({ x, y, neighbors: new Set() }))
+    );
+    this.game.initNeighbors();
+
+    const addWall = (wall) => {
+      this.game.removeConnectionsForWall(wall);
+      this.game.placedWalls.push(wall);
+      if (wall.x < cpSize && wall.y < cpSize) {
+        this.game.crossPoints[wall.x][wall.y] = true;
+      }
+    };
+
     for (let idx = 0; idx < c2.length; idx++) {
       if (c2[idx] === 1) {
-        const y = Math.floor(idx / N), x = idx % N;
-        this.game.placedWalls.push({ type:"wall", x, y, orientation:"h" });
-      }
-    }
-    // 세로
-    for (let idx = 0; idx < c3.length; idx++) {
-      if (c3[idx] === 1) {
-        const y = Math.floor(idx / (N-1)), x = idx % (N-1);
-        this.game.placedWalls.push({ type:"wall", x, y, orientation:"v" });
+        const y = Math.floor(idx / N);
+        const x = idx % N;
+        if (x < N - 1 && y < N - 1) {
+          addWall({ type: 'wall', x, y, orientation: 'h' });
+        }
       }
     }
 
-    // currentPlayer 복원 (3 - 마지막으로 둔 사람)
-    const last = this.game.placedWalls.length +  // wall 개수
-                 (this.game.pawns[1].x === 4 && this.game.pawns[1].y===0 ? 0 : 1) +
-                 (this.game.pawns[2].x === 4 && this.game.pawns[2].y===8 ? 0 : 1);
-    // (이건 예시 로직; 필요하면 getCurrentPlayer 로 대체하세요)
-    this.game.currentPlayer = (last % 2 === 0 ? 1 : 2);
+    for (let idx = 0; idx < c3.length; idx++) {
+      if (c3[idx] === 1) {
+        const y = Math.floor(idx / N);
+        const x = idx % N;
+        if (x < N - 1 && y < N - 1) {
+          addWall({ type: 'wall', x, y, orientation: 'v' });
+        }
+      }
+    }
+
+    if (wallCounts) {
+      this.game.wallCounts = { ...wallCounts };
+    }
+
+    if (typeof currentPlayer === 'number') {
+      this.game.currentPlayer = currentPlayer;
+    }
   }
   
   /**

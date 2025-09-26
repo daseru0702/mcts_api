@@ -178,10 +178,34 @@ export class QuoridorGame {
   static fromJSON(json) {
     const g = new QuoridorGame();
     g.boardSize     = json.boardSize;
-    g.pawns         = { ...json.pawns };
-    g.wallCounts    = { ...json.wallCounts };
-    g.placedWalls   = json.placedWalls.map(w => ({ ...w }));
-    g.currentPlayer = json.currentPlayer;
+    if (json.pawns) {
+      g.pawns = {
+        1: { ...json.pawns[1] },
+        2: { ...json.pawns[2] },
+      };
+    }
+    g.wallCounts    = json.wallCounts ? { ...json.wallCounts } : { 1: 10, 2: 10 };
+    g.placedWalls   = (json.placedWalls || []).map(w => ({ ...w }));
+    g.currentPlayer = json.currentPlayer ?? g.currentPlayer;
+
+    // 기존 보드에서 다시 계산된 교차점/연결 정보를 적용합니다.
+    const cpSize = g.boardSize - 1;
+    g.crossPoints = Array.from({ length: cpSize }, () => Array(cpSize).fill(false));
+    g.nodes = Array.from({ length: g.boardSize }, (_, x) =>
+      Array.from({ length: g.boardSize }, (_, y) => ({
+        x,
+        y,
+        neighbors: new Set(),
+      }))
+    );
+    g.initNeighbors();
+    for (const wall of g.placedWalls) {
+      g.removeConnectionsForWall(wall);
+      if (wall.x < cpSize && wall.y < cpSize) {
+        g.crossPoints[wall.x][wall.y] = true;
+      }
+    }
+
     return g;
   }
 }
