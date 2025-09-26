@@ -53,7 +53,9 @@ app.post('/best-move', async (req, res) => {
 
     // 어댑터에 config 전달
     const adapter = await AdapterFactory.create(gameName, state);
-    adapter.setStateFromArray(state);
+    if (Array.isArray(state)) {
+      adapter.setStateFromArray(state);
+    }
 
     // 요청별 시뮬레이션 횟수 조정
     mcts.simLimit = simLimit || cfg.simLimit;

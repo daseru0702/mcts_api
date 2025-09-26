@@ -2,14 +2,11 @@
 
 const API_URL = "http://localhost:3000/best-move";
 
-export async function getBestMove(gameName, stateTensor, simLimit = 1000) {
-  const raw = stateTensor.dataSync ? stateTensor.dataSync() : stateTensor.data;
-  const stateArr = Array.from(raw);
-
-  const res = await fetch(`http://localhost:3000/best-move`, {
+export async function getBestMove(gameName, state, simLimit = 1000) {
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ gameName, state: stateArr, simLimit }),
+    body: JSON.stringify({ gameName, state, simLimit }),
   });
 
   if (!res.ok) {
@@ -18,14 +15,4 @@ export async function getBestMove(gameName, stateTensor, simLimit = 1000) {
   }
   const { move } = await res.json();
   return move;
-}
-
-function serializeGame(game) {
-  return {
-    boardSize:      game.boardSize,
-    pawns:          game.pawns,
-    wallCounts:     game.wallCounts,
-    currentPlayer:  game.currentPlayer,
-    placedWalls:    game.placedWalls
-  };
 }

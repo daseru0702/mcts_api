@@ -55,7 +55,7 @@ export class GameController {
     this.isThinking = true;
     this._render();
 
-    const stateJson = this.adapter.getStateTensor();
+    const stateJson = this.adapter.toJSON();
     const best      = await getBestMove("quoridor", stateJson, 1000);
 
     this.isThinking = false;
