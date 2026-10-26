@@ -1,48 +1,49 @@
 // games/quoridor/QuoridorAdapter.js
+//
+// MCTS/신경망이 사용하는 게임 공통 인터페이스.
+// 신경망 입력과 정책 인덱스는 "현재 둘 차례인 플레이어" 기준(canonical)입니다.
+// Player 2 차례일 때는 보드를 상하 반전해서 항상 "내가 y=0 → y=8 로 간다"로 보이게 합니다.
+//
+//  입력 채널 (IN_CHANNELS × 9 × 9)
+//    0: 내 말            1: 상대 말
+//    2: 가로벽(교차점)    3: 세로벽(교차점)
+//    4: 내 남은 벽/10     5: 상대 남은 벽/10   (상수 평면)
+//    6: 내 목표까지 거리맵/20  7: 상대 목표까지 거리맵/20  (도달 불가 = 1)
+//
+//  정책 인덱스 (POLICY_SIZE = 81 + 64 + 64 = 209)
+//    [0, 81)    말 이동 도착칸  y*9 + x
+//    [81, 145)  가로벽         81 + y*8 + x
+//    [145, 209) 세로벽         145 + y*8 + x
 
 import { QuoridorGame } from "./QuoridorGame.js";
 
+const N = 9;
+const W = 8;
+const PLANE = N * N;
+export const IN_CHANNELS = 8;
+export const POLICY_SIZE = PLANE + 2 * W * W;
+
 export class QuoridorAdapter {
+  static IN_CHANNELS = IN_CHANNELS;
+  static BOARD_SIZE = N;
+  static POLICY_SIZE = POLICY_SIZE;
+
   constructor(stateOrJson = null) {
     if (stateOrJson instanceof QuoridorGame) {
       this.game = stateOrJson;
-
-    } else if (Array.isArray(stateOrJson)) {
-      // flat 배열이 넘어왔을 때
-      this.game = new QuoridorGame();
-      this.setStateFromArray(stateOrJson);
-
     } else if (stateOrJson && typeof stateOrJson === "object") {
-      // JSON restore
       this.game = QuoridorGame.fromJSON(stateOrJson);
-
     } else {
       this.game = new QuoridorGame();
     }
   }
 
   clone() {
-    const clonedGame = this.game.clone();
-    return new QuoridorAdapter(clonedGame);
+    return new QuoridorAdapter(this.game.clone());
   }
 
   getPossibleMoves() {
-    const pawnMoves = this.game
-      .getLegalPawnMoves()
-      .map(m => ({ type: "move", x: m.x, y: m.y }));
-    const wallMoves = [];
-    const N = this.game.boardSize - 1;
-    for (let x = 0; x < N; x++) {
-      for (let y = 0; y < N; y++) {
-        for (const orientation of ["h", "v"]) {
-          const mv = { type: "wall", x, y, orientation };
-          if (this.game.isValidWallPlacement(mv)) {
-            wallMoves.push(mv);
-          }
-        }
-      }
-    }
-    return pawnMoves.concat(wallMoves);
+    return this.game.getAllMoves();
   }
 
   applyMove(move) {
@@ -51,145 +52,117 @@ export class QuoridorAdapter {
   }
 
   isTerminal() {
-    const p1 = this.game.pawns[1].y === this.game.boardSize - 1;
-    const p2 = this.game.pawns[2].y === 0;
-    return p1 || p2;
+    return this.game.isOver();
   }
 
-  getReward(player) {
-    const pawn = this.game.pawns[player];
-    return ((player === 1 && pawn.y === this.game.boardSize - 1) ||
-            (player === 2 && pawn.y === 0))
-      ? 1 : 0;
+  /** 승자 (1/2), 진행 중이면 0 */
+  getWinner() {
+    return this.game.getWinner();
   }
 
   getCurrentPlayer() {
     return this.game.currentPlayer;
   }
 
-  getStateTensor() {
-    const N = this.game.boardSize;  // 9
-  
-    // --- 채널 0,1: 폰 위치 (N×N) ---
-    const c0 = new Float32Array(N*N).fill(0);
-    const c1 = new Float32Array(N*N).fill(0);
-    const p1 = this.game.pawns[1], p2 = this.game.pawns[2];
-    c0[p1.y * N + p1.x] = 1;
-    c1[p2.y * N + p2.x] = 1;
-  
-    // --- 채널 2: 수평벽 (N×N)에 유효 위치만 1 찍기) ---
-    const c2 = new Float32Array(N*N).fill(0);
-    // 수평벽은 x∈[0,N-2], y∈[0,N-1]
-    for (const w of this.game.placedWalls) {
-      if (w.orientation === "h") {
-        // row = w.y, col = w.x
-        c2[w.y * N + w.x] = 1;
-      }
-    }
-  
-    // --- 채널 3: 수직벽 (N×N)에 유효 위치만 1 찍기) ---
-    const c3 = new Float32Array(N*N).fill(0);
-    // 수직벽은 x∈[0,N-1], y∈[0,N-2]
-    for (const w of this.game.placedWalls) {
-      if (w.orientation === "v") {
-        // row = w.y, col = w.x
-        c3[w.y * N + w.x] = 1;
-      }
-    }
-  
-    // --- 4채널 모두 합치기 ---
-    const flat = Float32Array.from([
-      ...c0, ...c1,
-      ...c2, ...c3
-    ]);
-  
-    return { data: flat, shape: [1, 4, N, N] };
+  getMoveCount() {
+    return this.game.moveCount;
   }
-  
 
-  // 서버: flat array → TensorFlow 텐서 → QuoridorGame 상태로 복원
-  setStateFromArray(flatArr, currentPlayer = null, wallCounts = null) {
-    const data = Array.from(flatArr);
-    const N    = this.game.boardSize;
-    if (data.length !== 4 * N * N) {
-      throw new Error(`flatArr 길이 불일치: expected ${4 * N * N}, got ${data.length}`);
-    }
-
-    const channelSize = N * N;
-    const c0 = data.slice(0, channelSize);
-    const c1 = data.slice(channelSize, 2 * channelSize);
-    const c2 = data.slice(2 * channelSize, 3 * channelSize);
-    const c3 = data.slice(3 * channelSize);
-
-    const p1Idx = c0.findIndex(v => v === 1);
-    const p2Idx = c1.findIndex(v => v === 1);
-    if (p1Idx === -1 || p2Idx === -1) {
-      throw new Error('플레이어 위치 복원 실패');
-    }
-
-    // 기본 상태로 초기화한 뒤 복원합니다.
-    this.game = new QuoridorGame();
-    this.game.pawns[1] = { x: p1Idx % N, y: Math.floor(p1Idx / N) };
-    this.game.pawns[2] = { x: p2Idx % N, y: Math.floor(p2Idx / N) };
-
-    this.game.placedWalls = [];
-    const cpSize = N - 1;
-    this.game.crossPoints = Array.from({ length: cpSize }, () => Array(cpSize).fill(false));
-    this.game.nodes = Array.from({ length: N }, (_, x) =>
-      Array.from({ length: N }, (_, y) => ({ x, y, neighbors: new Set() }))
-    );
-    this.game.initNeighbors();
-
-    const addWall = (wall) => {
-      this.game.removeConnectionsForWall(wall);
-      this.game.placedWalls.push(wall);
-      if (wall.x < cpSize && wall.y < cpSize) {
-        this.game.crossPoints[wall.x][wall.y] = true;
-      }
-    };
-
-    for (let idx = 0; idx < c2.length; idx++) {
-      if (c2[idx] === 1) {
-        const y = Math.floor(idx / N);
-        const x = idx % N;
-        if (x < N - 1 && y < N - 1) {
-          addWall({ type: 'wall', x, y, orientation: 'h' });
-        }
-      }
-    }
-
-    for (let idx = 0; idx < c3.length; idx++) {
-      if (c3[idx] === 1) {
-        const y = Math.floor(idx / N);
-        const x = idx % N;
-        if (x < N - 1 && y < N - 1) {
-          addWall({ type: 'wall', x, y, orientation: 'v' });
-        }
-      }
-    }
-
-    if (wallCounts) {
-      this.game.wallCounts = { ...wallCounts };
-    }
-
-    if (typeof currentPlayer === 'number') {
-      this.game.currentPlayer = currentPlayer;
-    }
+  /** 끝난 게임에서 player 기준 보상 (+1 승 / -1 패) */
+  getReward(player) {
+    const w = this.getWinner();
+    return w === 0 ? 0 : (w === player ? 1 : -1);
   }
-  
+
+  // ─── 신경망 인코딩 ─────────────────────────────────────────────
+
   /**
-   * JSON 형태로 상태 직렬화 (클라이언트↔서버 간 주고받을 때)
+   * @param {boolean} mirror 좌우 반전 (데이터 증강용)
+   * @returns {Float32Array} 길이 IN_CHANNELS*81
    */
-  toJSON() {
-    // 서버 API에서 상태 직렬화가 필요하다면,
-    // QuoridorGame 쪽에 toJSON이 없으면 직접 뽑아주세요.
-    return this.game.toJSON
-      ? this.game.toJSON()
-      : {  };
+  encode(mirror = false) {
+    const g = this.game;
+    const me = g.currentPlayer, opp = 3 - me;
+    const flip = me === 2;
+    const cy = y => (flip ? N - 1 - y : y);
+    const cx = x => (mirror ? N - 1 - x : x);
+    const wy = y => (flip ? W - 1 - y : y);
+    const wx = x => (mirror ? W - 1 - x : x);
+
+    const out = new Float32Array(IN_CHANNELS * PLANE);
+    const pm = g.pawns[me], po = g.pawns[opp];
+    out[0 * PLANE + cy(pm.y) * N + cx(pm.x)] = 1;
+    out[1 * PLANE + cy(po.y) * N + cx(po.x)] = 1;
+    for (const w of g.placedWalls) {
+      const ch = w.orientation === "h" ? 2 : 3;
+      out[ch * PLANE + wy(w.y) * N + wx(w.x)] = 1;
+    }
+    out.fill(g.wallCounts[me] / 10, 4 * PLANE, 5 * PLANE);
+    out.fill(g.wallCounts[opp] / 10, 5 * PLANE, 6 * PLANE);
+
+    const dMe = g.distanceMap(me), dOpp = g.distanceMap(opp);
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const src = y * N + x;
+        const dst = cy(y) * N + cx(x);
+        out[6 * PLANE + dst] = dMe[src] < 0 ? 1 : Math.min(dMe[src] / 20, 1);
+        out[7 * PLANE + dst] = dOpp[src] < 0 ? 1 : Math.min(dOpp[src] / 20, 1);
+      }
+    }
+    return out;
   }
 
-  _findIndex(arr, N) {
-    const idx = arr.findIndex(v => v === 1);
-    return [ Math.floor(idx / N), idx % N ];
+  /** 수 → canonical 정책 인덱스 (현재 차례 기준) */
+  moveToIndex(move, mirror = false) {
+    const flip = this.game.currentPlayer === 2;
+    if (move.type === "move") {
+      const y = flip ? N - 1 - move.y : move.y;
+      const x = mirror ? N - 1 - move.x : move.x;
+      return y * N + x;
+    }
+    const y = flip ? W - 1 - move.y : move.y;
+    const x = mirror ? W - 1 - move.x : move.x;
+    return (move.orientation === "h" ? PLANE : PLANE + W * W) + y * W + x;
+  }
+
+  // ─── 휴리스틱 (신경망이 없을 때 0세대 데이터 생성/비교용) ─────────────
+
+  /** 현재 차례 플레이어 기준 [-1,1] 가치 추정: 최단거리 차이 + 남은 벽 */
+  heuristicValue() {
+    const g = this.game;
+    const me = g.currentPlayer, opp = 3 - me;
+    const dMe = g.shortestDistance(me);
+    const dOpp = g.shortestDistance(opp);
+    // 내가 먼저 두므로 한 수(0.5) 이득을 줍니다
+    const diff = (dOpp - dMe) + 0.5 + 0.3 * (g.wallCounts[me] - g.wallCounts[opp]);
+    return Math.tanh(diff / 4);
+  }
+
+  /** 합법 수마다 사전확률: 최단경로를 줄이는 이동, 상대 경로를 늘리는 벽에 가중치 */
+  heuristicPriors(moves) {
+    const g = this.game;
+    const me = g.currentPlayer, opp = 3 - me;
+    const dMap = g.distanceMap(me);
+    const myDist = dMap[g.pawns[me].y * N + g.pawns[me].x];
+    const oppDist = g.shortestDistance(opp);
+    const weights = moves.map(m => {
+      if (m.type === "move") {
+        const d = dMap[m.y * N + m.x];
+        return d < myDist ? 6 : d === myDist ? 0.8 : 0.3;
+      }
+      // 벽: 상대 최단거리가 늘어나는 만큼 가중치
+      g._setWallBlocks(m.x, m.y, m.orientation, 1);
+      const gain = g.shortestDistance(opp) - oppDist;
+      const cost = g.shortestDistance(me) - myDist;
+      g._setWallBlocks(m.x, m.y, m.orientation, 0);
+      const score = gain - cost;
+      return score > 0 ? 0.6 * score : 0.02;
+    });
+    const sum = weights.reduce((a, b) => a + b, 0);
+    return weights.map(w => w / sum);
+  }
+
+  toJSON() {
+    return this.game.toJSON();
   }
 }

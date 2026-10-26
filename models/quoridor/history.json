@@ -1,0 +1,69 @@
+{
+  "best": "models\\quoridor\\gen_002",
+  "generations": [
+    {
+      "gen": 1,
+      "selfplay": {
+        "games": 1500,
+        "rows": 153132,
+        "avgMoves": 51.044,
+        "wins": {
+          "0": 0,
+          "1": 828,
+          "2": 672
+        },
+        "seconds": 325.078
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_001",
+      "bestVsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_001.onnx:200",
+        "b": "heur:200",
+        "aWins": 35,
+        "bWins": 5,
+        "draws": 0,
+        "aWinsAsP1": 17,
+        "aWinsAsP2": 18,
+        "aScore": 0.875
+      },
+      "seconds": 392
+    },
+    {
+      "gen": 2,
+      "selfplay": {
+        "games": 400,
+        "rows": 51226,
+        "avgMoves": 64.0325,
+        "wins": {
+          "0": 21,
+          "1": 189,
+          "2": 190
+        },
+        "seconds": 252.189
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_002.onnx:200",
+        "b": "nn:models\\quoridor\\gen_001.onnx:200",
+        "aWins": 37,
+        "bWins": 2,
+        "draws": 1,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 18,
+        "aScore": 0.9375
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_002",
+      "bestVsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_002.onnx:200",
+        "b": "heur:200",
+        "aWins": 34,
+        "bWins": 6,
+        "draws": 0,
+        "aWinsAsP1": 17,
+        "aWinsAsP2": 17,
+        "aScore": 0.85
+      },
+      "seconds": 393
+    }
+  ]
+}
