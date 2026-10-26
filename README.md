@@ -34,7 +34,7 @@ npm start
 
 http://localhost:3000 — `models/quoridor/best.onnx` 를 사용합니다 (없으면 휴리스틱 MCTS).
 모델 파일이 바뀌면 서버가 10초 안에 자동으로 다시 불러옵니다.
-2분 30초 동안 아무도 조작하지 않으면 AI vs AI 데모 모드로 전환됩니다.
+AI 끼리 두는 모습은 "AI vs AI 데모" 버튼으로 볼 수 있습니다.
 
 ## 학습
 

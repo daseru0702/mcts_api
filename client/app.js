@@ -7,7 +7,6 @@ const G = 3;           // 홈(벽 자리) 두께
 const S = C + G;       // 칸 간격
 const SPAN = 9 * C + 8 * G;
 const COLS = "abcdefghi";
-const IDLE_DEMO_MS = 150_000;
 
 const $ = id => document.getElementById(id);
 const svg = $("board");
@@ -458,13 +457,6 @@ $("btnFullscreen").addEventListener("click", () => {
   else document.documentElement.requestFullscreen?.();
 });
 
-// 전시용: 오래 아무도 만지지 않으면 데모 모드로 전환
-let idleTimer;
-function resetIdle() {
-  clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => { if (!ui.demo) newGame({ demo: true }); }, IDLE_DEMO_MS);
-}
-for (const ev of ["pointerdown", "keydown"]) window.addEventListener(ev, resetIdle, { passive: true });
 
 // ─── 학습 정보 ───────────────────────────────────────────────────
 async function loadInfo() {
@@ -521,6 +513,5 @@ function drawChart(gens) {
 
 buildBoard();
 newGame();
-resetIdle();
 loadInfo();
 setInterval(loadInfo, 60_000);
