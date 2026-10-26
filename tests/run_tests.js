@@ -89,6 +89,18 @@ await test("JSON 왕복", () => {
   }
 });
 
+await test("toJSON 스냅숏은 이후 수에 영향받지 않음 (무르기)", () => {
+  const g = new QuoridorGame();
+  const snap = g.toJSON();
+  g.applyMove({ type: "move", x: 4, y: 1 });
+  g.applyMove({ type: "wall", x: 3, y: 3, orientation: "h" });
+  const r = QuoridorGame.fromJSON(snap);
+  assert.deepEqual(r.pawns[1], { x: 4, y: 0 });
+  assert.equal(r.placedWalls.length, 0);
+  assert.equal(r.wallCounts[2], 10);
+  assert.equal(r.currentPlayer, 1);
+});
+
 await test("정책 인덱스: 고유, 범위 내, 좌우반전 일관성", () => {
   for (const g of randomGame()) {
     const s = new QuoridorAdapter(g);
