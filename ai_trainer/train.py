@@ -7,7 +7,11 @@
 #       --out-ckpt models/quoridor/gen_002.pt --out-onnx models/quoridor/gen_002.onnx \
 #       [--init models/quoridor/gen_001.pt] [--epochs 4]
 #
-# .bin 형식은 ai_trainer/selfplay.js 참고: float32 행 [state | pi | z]
+# .bin 형식은 ai_trainer/selfplay.js 참고: float32 행 [state | pi | z | q]
+#
+# 가치 목표 = z_weight·z + (1-z_weight)·q
+#   z(최종 승패)만 쓰면 신경망이 벽 배치로 '어느 게임인지'를 외워 과적합되므로
+#   국면별 MCTS 평가값 q 를 섞습니다.
 
 import argparse
 import json
@@ -24,7 +28,7 @@ IN_CHANNELS = 8
 BOARD = 9
 POLICY_SIZE = 81 + 2 * 64
 STATE_SIZE = IN_CHANNELS * BOARD * BOARD
-ROW = STATE_SIZE + POLICY_SIZE + 1
+ROW = STATE_SIZE + POLICY_SIZE + 2
 
 
 class ResBlock(nn.Module):
@@ -74,7 +78,8 @@ def load_data(paths):
         arrays.append(a.reshape(-1, ROW))
         print(f"  {p}: {arrays[-1].shape[0]} rows")
     data = np.concatenate(arrays)
-    return data[:, :STATE_SIZE], data[:, STATE_SIZE:STATE_SIZE + POLICY_SIZE], data[:, -1:]
+    return (data[:, :STATE_SIZE], data[:, STATE_SIZE:STATE_SIZE + POLICY_SIZE],
+            data[:, -2:-1], data[:, -1:])
 
 
 def export_onnx(model, path):
@@ -102,19 +107,21 @@ def main():
     ap.add_argument("--channels", type=int, default=64)
     ap.add_argument("--blocks", type=int, default=6)
     ap.add_argument("--value-weight", type=float, default=1.0)
+    ap.add_argument("--z-weight", type=float, default=0.5, help="가치 목표에서 최종 승패 z 의 비중")
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"device={device}")
 
-    states, pis, zs = load_data(args.data)
+    states, pis, zs, qs = load_data(args.data)
     n = states.shape[0]
     # 행 순서 = 게임 순서이므로 끝 5% 를 검증용으로 (같은 게임이 섞이지 않게)
     n_val = max(1, int(n * 0.05))
     perm_train = np.arange(n - n_val)
     X = torch.from_numpy(states).view(-1, IN_CHANNELS, BOARD, BOARD).to(device)
     P = torch.from_numpy(pis).to(device)
-    Z = torch.from_numpy(zs).to(device)
+    Zraw = torch.from_numpy(zs).to(device)
+    Z = args.z_weight * Zraw + (1 - args.z_weight) * torch.from_numpy(qs).to(device)
 
     if args.init and os.path.exists(args.init):
         ck = torch.load(args.init, map_location="cpu")
@@ -133,14 +140,15 @@ def main():
     def evaluate():
         model.eval()
         with torch.no_grad():
-            pl = vl = 0.0
+            pl = vl = vz = 0.0
             for i in range(n - n_val, n, 4096):
                 j = min(i + 4096, n)
                 logits, v = model(X[i:j])
                 pl += -(P[i:j] * F.log_softmax(logits, 1)).sum(1).sum().item()
                 vl += F.mse_loss(v, Z[i:j], reduction="sum").item()
+                vz += F.mse_loss(v, Zraw[i:j], reduction="sum").item()
         model.train()
-        return pl / n_val, vl / n_val
+        return pl / n_val, vl / n_val, vz / n_val
 
     t0 = time.time()
     step = 0
@@ -165,16 +173,16 @@ def main():
             run_p += p_loss.item()
             run_v += v_loss.item()
             cnt += 1
-        vp, vv = evaluate()
+        vp, vv, vz = evaluate()
         print(f"  step {step}/{total_steps}  train p={run_p / cnt:.4f} v={run_v / cnt:.4f}  "
-              f"val p={vp:.4f} v={vv:.4f}  ({time.time() - t0:.0f}s)", flush=True)
+              f"val p={vp:.4f} v={vv:.4f} v_vs_z={vz:.4f}  ({time.time() - t0:.0f}s)", flush=True)
 
     os.makedirs(os.path.dirname(args.out_ckpt) or ".", exist_ok=True)
     torch.save({"model": model.state_dict(), "channels": model.stem[0].out_channels,
                 "blocks": len(model.body)}, args.out_ckpt)
     export_onnx(model, args.out_onnx)
-    vp, vv = evaluate() if False else (None, None)
-    print(json.dumps({"ckpt": args.out_ckpt, "onnx": args.out_onnx, "rows": n}))
+    print(json.dumps({"ckpt": args.out_ckpt, "onnx": args.out_onnx, "rows": n,
+                      "valPolicy": vp, "valValue": vv, "valValueVsZ": vz}))
 
 
 if __name__ == "__main__":

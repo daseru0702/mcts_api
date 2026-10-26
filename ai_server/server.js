@@ -17,6 +17,7 @@ import { fileURLToPath } from "url";
 import { QuoridorAdapter } from "../games/quoridor/QuoridorAdapter.js";
 import { MCTS } from "../common/mcts.js";
 import { HeuristicEvaluator, OnnxEvaluator } from "../common/evaluators.js";
+import { LEVELS } from "../common/levels.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -24,11 +25,6 @@ const MODEL_PATH = process.env.MODEL_PATH || path.join(ROOT, "models", "quoridor
 const HISTORY_PATH = path.join(ROOT, "models", "quoridor", "history.json");
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
-const LEVELS = {
-  easy:   { simulations: 40,  temperature: 1 },
-  normal: { simulations: 300, temperature: 0 },
-  hard:   { simulations: 1200, temperature: 0 },
-};
 
 // ─── 모델 로드 & 자동 리로드 ─────────────────────────────────────────────
 let evaluator = new HeuristicEvaluator();
@@ -71,6 +67,10 @@ const app = express();
 app.use(express.json({ limit: "64kb" }));
 app.use("/", express.static(path.join(ROOT, "client")));
 app.use("/games", express.static(path.join(ROOT, "games")));
+app.use("/common", express.static(path.join(ROOT, "common")));
+// 정적 배포(GitHub Pages)와 같은 경로로 모델/기록 제공
+app.get("/models/best.onnx", (req, res) => res.sendFile(MODEL_PATH));
+app.get("/models/history.json", (req, res) => res.sendFile(HISTORY_PATH));
 
 app.post("/api/move", async (req, res) => {
   let state;

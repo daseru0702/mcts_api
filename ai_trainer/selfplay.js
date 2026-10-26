@@ -6,7 +6,8 @@
 //        [--games=400] [--sims=300] [--workers=14] [--max-moves=160] [--temp-moves=10]
 //
 // --model 을 생략하면 휴리스틱 평가기로 0세대 데이터를 만듭니다.
-// 출력은 float32 행의 연속:  [state(IN_CHANNELS*81) | pi(POLICY_SIZE) | z(1)]
+// 출력은 float32 행의 연속:  [state(IN_CHANNELS*81) | pi(POLICY_SIZE) | z(1) | q(1)]
+//   z = 최종 승패 (둘 차례 기준), q = 그 국면의 MCTS 평가값 (둘 차례 기준)
 // 모든 포지션은 좌우 반전본이 함께 저장됩니다 (데이터 2배).
 
 import fs from "fs";
@@ -20,7 +21,7 @@ import { HeuristicEvaluator, OnnxEvaluator } from "../common/evaluators.js";
 import { parseArgs } from "./players.js";
 
 const STATE_SIZE = IN_CHANNELS * 81;
-const ROW = STATE_SIZE + POLICY_SIZE + 1;
+const ROW = STATE_SIZE + POLICY_SIZE + 2;
 
 async function playGame(mcts, opts) {
   const state = new QuoridorAdapter();
@@ -29,11 +30,14 @@ async function playGame(mcts, opts) {
   while (!state.isTerminal() && state.getMoveCount() < opts.maxMoves) {
     const root = await mcts.search(state, { addNoise: true });
     const pi = mcts.visitDistribution(root);
+    // 루트 평가값: 모든 자식의 방문 가중 평균 Q (둘 차례 기준)
+    const nSum = root.N.reduce((a, b) => a + b, 0);
+    const q = nSum > 0 ? root.W.reduce((a, b) => a + b, 0) / nSum : root.value;
 
     for (const mirror of [false, true]) {
       const piDense = new Float32Array(POLICY_SIZE);
       root.moves.forEach((m, a) => { piDense[state.moveToIndex(m, mirror)] = pi[a]; });
-      records.push({ s: state.encode(mirror), pi: piDense, player: state.getCurrentPlayer() });
+      records.push({ s: state.encode(mirror), pi: piDense, q, player: state.getCurrentPlayer() });
     }
 
     const temperature = state.getMoveCount() < opts.tempMoves ? 1 : 0;
@@ -56,7 +60,8 @@ async function playGame(mcts, opts) {
   records.forEach((r, i) => {
     buf.set(r.s, i * ROW);
     buf.set(r.pi, i * ROW + STATE_SIZE);
-    buf[i * ROW + ROW - 1] = r.player === 1 ? zP1 : -zP1;
+    buf[i * ROW + ROW - 2] = r.player === 1 ? zP1 : -zP1;
+    buf[i * ROW + ROW - 1] = r.q;
   });
   return { buf, moves: state.getMoveCount(), winner };
 }

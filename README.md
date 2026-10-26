@@ -3,12 +3,17 @@
 AlphaZero 방식(PUCT MCTS + 정책/가치 신경망 + 자가대국 강화학습)으로 9×9 쿼리도를 학습하고,
 전시용 웹사이트에서 사람과 대국합니다.
 
+### ▶ [온라인 데모: daseru0702.github.io/mcts_api](https://daseru0702.github.io/mcts_api/)
+
+서버 없이 브라우저 안에서(WebAssembly) 신경망과 MCTS 가 돌아갑니다. `main` 에 푸시하면 GitHub Actions 가 자동 배포합니다.
+
 ```
 games/quoridor/   규칙 엔진(QuoridorGame) + 신경망 인코딩(QuoridorAdapter)  ← 브라우저/Node 공용
 common/           mcts.js (AlphaZero PUCT), mcts_pure.js (순수 MCTS 기준선), evaluators.js (ONNX/휴리스틱)
 ai_trainer/       selfplay.js (자가대국), train.py (PyTorch 학습→ONNX), arena.js (대결), pipeline.py (세대 반복)
-ai_server/        Express 서버: 웹페이지 + /api/move
-client/           전시용 웹페이지
+ai_server/        Express 서버: 웹페이지 + /api/move (전시장 PC 용, 탐색이 더 빠름)
+client/           전시용 웹페이지 (서버가 없으면 ai-worker.js 로 브라우저에서 탐색)
+scripts/          build_pages.sh — GitHub Pages 용 정적 사이트 생성
 tests/            규칙/인코딩/MCTS 테스트
 ```
 
@@ -37,10 +42,15 @@ http://localhost:3000 — `models/quoridor/best.onnx` 를 사용합니다 (없�
 npm run train            # = .venv/Scripts/python ai_trainer/pipeline.py
 ```
 
-1. **0세대**: 최단경로 휴리스틱을 평가기로 쓰는 MCTS 로 1500판 자가대국
-2. **세대 k**: 현재 best 모델로 400판 자가대국 → 최근 5세대 데이터로 이어서 학습 →
-   best 와 40판 대결해 55% 이상이면 교체 → 휴리스틱 MCTS 상대 승률 기록
+1. **0세대**: 최단경로 휴리스틱을 평가기로 쓰는 MCTS 로 3000판 자가대국
+2. **세대 k**: 현재 best 모델로 400판 자가대국 → 최근 5세대 데이터로 1 epoch 이어서 학습 →
+   휴리스틱 MCTS 와 40판(고정 기준) + best 와 40판 대결 →
+   best 상대 55% 이상이고 휴리스틱 상대 승률이 best 보다 10%p 넘게 떨어지지 않으면 교체
 3. 중단해도 다시 실행하면 `models/quoridor/history.json` 기준으로 이어서 진행
+
+가치 목표는 최종 승패 z 와 국면별 MCTS 평가값 q 의 평균입니다.
+z 만 쓰면 벽 배치가 게임 내내 남아 있어 신경망이 "어떤 게임인지"를 외워 과적합됩니다
+(1차 학습에서 검증 가치 손실이 거리 공식 하나보다도 나빴고, 세대가 갈수록 자기 이전 버전만 이기고 기준선에는 지는 표류가 생겼습니다).
 
 개별 실행:
 
