@@ -274,12 +274,13 @@ export class QuoridorGame {
     return g;
   }
 
+  /** 현재 상태의 복사본 (이후 수를 둬도 바뀌지 않음 — 무르기 스냅숏에 사용) */
   toJSON() {
     return {
       boardSize:     this.boardSize,
-      pawns:         this.pawns,
-      wallCounts:    this.wallCounts,
-      placedWalls:   this.placedWalls,
+      pawns:         { 1: { ...this.pawns[1] }, 2: { ...this.pawns[2] } },
+      wallCounts:    { ...this.wallCounts },
+      placedWalls:   this.placedWalls.map(w => ({ ...w })),
       currentPlayer: this.currentPlayer,
       moveCount:     this.moveCount,
     };
