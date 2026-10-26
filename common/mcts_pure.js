@@ -77,8 +77,9 @@ export class MCTSPure {
       state.applyMove(mv);
       moves++;
     }
-    // 터미널: 현재 차례인 플레이어가 못 두는 상태이므로,
-    // 마지막에 둔 플레이어가 승자입니다.
+    // 수 제한으로 끊긴 롤아웃은 승자 없음(0)으로 처리합니다.
+    if (!state.isTerminal()) return 0;
+    // 터미널: 마지막에 둔 플레이어가 승자입니다.
     // state.getCurrentPlayer()는 "다음" 차례이므로 3 - current 가 바로 승자.
     return 3 - state.getCurrentPlayer();
   }

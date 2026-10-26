@@ -1,5 +1,12 @@
 node_modules
+.venv
+__pycache__
 docs
 *.wsd
 data
-models
+# 학습 산출물: 최종 모델과 학습 기록만 커밋
+models/*
+!models/quoridor/
+models/quoridor/*
+!models/quoridor/best.onnx
+!models/quoridor/history.json

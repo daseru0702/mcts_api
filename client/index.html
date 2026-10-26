@@ -1,27 +1,137 @@
-<!-- client/index.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>Quoridor AI</title>
-  <style>
-    /* 캔버스 가운데 정렬 + 보더 */
-    #gameCanvas {
-      display: block;
-      margin: 40px auto;
-      background: #fff;
-      border: 2px solid #333;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quoridor Zero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>Quoridor Zero</h1>
+        <p>몬테카를로 트리 탐색 + 신경망으로 스스로 학습한 쿼리도 AI</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="ghost" id="btnFullscreen" title="전체 화면">⛶</button>
+    </div>
+  </header>
 
-  <script type="module">
-    import { GameController } from '/games/quoridor/controller.js';
+  <main class="layout">
+    <section class="board-wrap">
+      <div class="status" id="status" role="status" aria-live="polite">
+        <span class="dot"></span><span id="statusText">게임 준비 중…</span>
+      </div>
+      <div class="board-frame">
+        <svg id="board" viewBox="-5 -5 124 124" aria-label="쿼리도 보드"></svg>
+        <div class="overlay hidden" id="overlay">
+          <div class="overlay-card">
+            <div class="overlay-title" id="overlayTitle"></div>
+            <div class="overlay-sub" id="overlaySub"></div>
+            <button class="primary" id="btnOverlayNew">다시 하기</button>
+          </div>
+        </div>
+      </div>
+      <p class="hint" id="hint">초록 점을 눌러 말을 옮기거나, 칸 사이 홈을 눌러 벽을 세우세요.</p>
+    </section>
 
-    const canvas = document.getElementById('gameCanvas');
-    new GameController(canvas);
-  </script>
+    <aside class="panel">
+      <div class="card players">
+        <div class="player" id="cardHuman">
+          <span class="pawn-icon human"></span>
+          <div class="pinfo">
+            <div class="pname">나</div>
+            <div class="walls" id="wallsHuman"></div>
+          </div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="player" id="cardAI">
+          <span class="pawn-icon ai"></span>
+          <div class="pinfo">
+            <div class="pname" id="aiName">AI</div>
+            <div class="walls" id="wallsAI"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>AI 예상 승률</h2>
+          <span class="mono muted" id="evalMeta"></span>
+        </div>
+        <div class="gauge" aria-label="AI 예상 승률">
+          <div class="gauge-human" id="gaugeHuman"></div>
+          <div class="gauge-ai" id="gaugeAI"></div>
+          <div class="gauge-mid"></div>
+        </div>
+        <div class="gauge-labels">
+          <span id="gaugeHumanLabel">나 50%</span>
+          <span id="gaugeAILabel">AI 50%</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="chkThinking" checked />
+          <span>AI가 고민한 후보 수를 보드에 표시</span>
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>새 게임</h2>
+        <div class="field">
+          <span class="label">난이도</span>
+          <div class="seg" id="segLevel">
+            <button data-v="easy">쉬움</button>
+            <button data-v="normal" class="on">보통</button>
+            <button data-v="hard">어려움</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="label">순서</span>
+          <div class="seg" id="segSide">
+            <button data-v="1" class="on">내가 먼저</button>
+            <button data-v="2">AI 먼저</button>
+          </div>
+        </div>
+        <div class="row">
+          <button class="primary" id="btnNew">새 게임 시작</button>
+          <button id="btnUndo">↶ 무르기</button>
+        </div>
+        <button class="demo" id="btnDemo">▶ AI vs AI 데모</button>
+      </div>
+
+      <div class="card">
+        <h2>기보</h2>
+        <ol class="moves mono" id="moveList"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <section class="about">
+    <div class="about-grid">
+      <div class="card">
+        <h2>어떻게 동작하나요?</h2>
+        <ol class="steps">
+          <li><b>탐색 (MCTS)</b> — 매 수마다 수백~천여 번 미래를 시뮬레이션하며 유망한 수를 깊게 파고듭니다.</li>
+          <li><b>신경망</b> — 판면을 보고 “어떤 수가 좋아 보이는지(정책)”와 “누가 이길지(가치)”를 예측해 탐색을 안내합니다.</li>
+          <li><b>자가대국 학습</b> — AI끼리 수천 판을 두고, 그 결과로 신경망을 다시 학습합니다. 이전 세대를 이긴 모델만 다음 챔피언이 됩니다.</li>
+        </ol>
+        <p class="muted small" id="modelLine">모델 정보를 불러오는 중…</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>세대별 실력 변화</h2>
+          <span class="muted small">기준: 휴리스틱 MCTS 상대 승률</span>
+        </div>
+        <svg id="chart" viewBox="0 0 320 170" class="chart" aria-label="세대별 승률 그래프"></svg>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
