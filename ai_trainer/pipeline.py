@@ -5,6 +5,7 @@
 #
 #   gen 0 : 휴리스틱 MCTS 자가대국 → 첫 신경망 학습
 #   gen k : 현재 best 모델로 자가대국 → 최근 데이터로 이어서 학습 → best 와 대결해 이기면 교체
+#           (고정 기준인 휴리스틱 MCTS 상대 승률이 best 보다 크게 떨어지면 교체하지 않음 — 자가대국 표류 방지)
 #
 #   .venv/Scripts/python ai_trainer/pipeline.py [--generations 15] [--games 400] [--sims 200]
 #
@@ -48,7 +49,7 @@ def load_history():
     if os.path.exists(HISTORY):
         with open(HISTORY, encoding="utf-8") as f:
             return json.load(f)
-    return {"best": None, "generations": []}
+    return {"best": None, "bestAnchor": 0, "generations": []}
 
 
 def save_history(h):
@@ -75,14 +76,16 @@ def arena(a, b, games):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--generations", type=int, default=15, help="학습할 신경망 세대 수")
-    ap.add_argument("--games0", type=int, default=1500, help="0세대(휴리스틱) 자가대국 판 수")
+    ap.add_argument("--games0", type=int, default=3000, help="0세대(휴리스틱) 자가대국 판 수")
     ap.add_argument("--games", type=int, default=400, help="세대당 자가대국 판 수")
     ap.add_argument("--sims", type=int, default=200, help="자가대국 시뮬레이션 수")
     ap.add_argument("--window", type=int, default=5, help="학습에 쓰는 최근 데이터 세대 수")
-    ap.add_argument("--epochs", type=float, default=3)
+    ap.add_argument("--epochs", type=float, default=1, help="세대당 학습 epoch (window 와 곱해 샘플당 재사용 횟수)")
     ap.add_argument("--gate-games", type=int, default=40)
     ap.add_argument("--gate-sims", type=int, default=200)
     ap.add_argument("--gate-threshold", type=float, default=0.55)
+    ap.add_argument("--anchor-tolerance", type=float, default=0.1,
+                    help="휴리스틱 상대 승률이 best 보다 이만큼 넘게 낮으면 교체하지 않음")
     args = ap.parse_args()
 
     os.makedirs(DATA, exist_ok=True)
@@ -113,30 +116,35 @@ def main():
         base = model_base(gen)
         cmd = [PY, "ai_trainer/train.py", "--data", *files,
                "--out-ckpt", base + ".pt", "--out-onnx", base + ".onnx",
-               "--epochs", str(args.epochs if gen > 1 else max(args.epochs, 6))]
+               "--epochs", str(args.epochs if gen > 1 else max(args.epochs, 2))]
         if gen > 1:
             cmd += ["--init", model_base(gen - 1) + ".pt"]
-        run(cmd)
+        train_out = run(cmd)
 
-        # 3) 게이팅: 현재 best 와 대결
+        # 3) 게이팅: 고정 기준(휴리스틱) 상대 실력 측정 + 현재 best 와 대결
         record = {"gen": gen, "selfplay": {k: sp_meta[k] for k in ("games", "rows", "avgMoves", "wins", "seconds")}}
+        try:
+            record["train"] = json.loads(train_out)
+        except ValueError:
+            pass
         new_spec = f"nn:{base}.onnx:{args.gate_sims}"
+        record["vsHeuristic"] = arena(new_spec, f"heur:{args.gate_sims}", args.gate_games)
+        cand_anchor = record["vsHeuristic"]["aScore"]
         if h["best"] is None:
             promoted = True
         else:
             res = arena(new_spec, f"nn:{h['best']}.onnx:{args.gate_sims}", args.gate_games)
             record["vsBest"] = res
-            promoted = res["aScore"] >= args.gate_threshold
+            promoted = (res["aScore"] >= args.gate_threshold and
+                        cand_anchor >= h["bestAnchor"] - args.anchor_tolerance)
         if promoted:
             h["best"] = base
+            h["bestAnchor"] = cand_anchor
             shutil.copyfile(os.path.join(ROOT, base + ".onnx"), BEST)
         record["promoted"] = promoted
         record["best"] = h["best"]
-
-        # 4) 기준선(휴리스틱 MCTS) 대비 실력 기록
-        if promoted or gen == args.generations:
-            record["bestVsHeuristic"] = arena(f"nn:{h['best']}.onnx:{args.gate_sims}",
-                                              f"heur:{args.gate_sims}", args.gate_games)
+        # 전시 페이지 그래프: 각 세대 시점 best 의 휴리스틱 상대 승률
+        record["bestVsHeuristic"] = {"aScore": h["bestAnchor"]}
         record["seconds"] = round(time.time() - t0)
         h["generations"].append(record)
         save_history(h)

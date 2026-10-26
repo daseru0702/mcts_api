@@ -10,3 +10,4 @@ models/*
 models/quoridor/*
 !models/quoridor/best.onnx
 !models/quoridor/history.json
+_site

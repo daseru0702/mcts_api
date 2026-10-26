@@ -1,5 +1,5 @@
 // client/app.js — 전시용 쿼리도 클라이언트
-import { QuoridorGame } from "/games/quoridor/QuoridorGame.js";
+import { QuoridorGame } from "./games/quoridor/QuoridorGame.js";
 
 // ─── 보드 기하 (SVG 단위) ─────────────────────────────────────────
 const C = 10;          // 칸 크기
@@ -242,6 +242,46 @@ function renderPanel() {
   }
 }
 
+// ─── AI 백엔드: 로컬 서버(전시용)가 있으면 서버, 없으면(GitHub Pages) 브라우저 워커 ──
+const backend = (async () => {
+  try {
+    const res = await fetch("api/info");
+    if (res.ok) return { kind: "server", info: await res.json() };
+  } catch {}
+  const worker = new Worker(new URL("./ai-worker.js", import.meta.url), { type: "module" });
+  const pending = new Map();
+  let nextId = 0, model = "loading";
+  worker.onmessage = ({ data }) => {
+    if (data.type === "ready") { model = data.model; loadInfo(); return; }
+    const p = pending.get(data.id);
+    pending.delete(data.id);
+    if (data.error) p?.reject(new Error(data.error));
+    else p?.resolve(data);
+  };
+  return {
+    kind: "browser",
+    get model() { return model; },
+    request: (state, level) => new Promise((resolve, reject) => {
+      const id = nextId++;
+      pending.set(id, { resolve, reject });
+      worker.postMessage({ id, state, level });
+    }),
+  };
+})();
+
+async function requestMove(state, level) {
+  const b = await backend;
+  if (b.kind === "browser") return b.request(state, level);
+  const res = await fetch("api/move", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ state, level }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || res.status);
+  return data;
+}
+
 // ─── 게임 진행 ──────────────────────────────────────────────────
 function play(move) {
   ui.snapshots.push(ui.game.toJSON());
@@ -284,13 +324,7 @@ async function maybeAI() {
   render();
   const started = Date.now();
   try {
-    const res = await fetch("/api/move", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state: g.toJSON(), level: ui.demo ? "normal" : ui.level }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || res.status);
+    const data = await requestMove(g.toJSON(), ui.demo ? "normal" : ui.level);
     // 너무 빨리 두면 사람이 따라가기 어려우므로 최소 지연
     const minDelay = ui.demo ? 700 : 350;
     await new Promise(r => setTimeout(r, Math.max(0, minDelay - (Date.now() - started))));
@@ -435,7 +469,14 @@ for (const ev of ["pointerdown", "keydown"]) window.addEventListener(ev, resetId
 // ─── 학습 정보 ───────────────────────────────────────────────────
 async function loadInfo() {
   try {
-    const info = await (await fetch("/api/info")).json();
+    const b = await backend;
+    let info;
+    if (b.kind === "server") {
+      info = await (await fetch("api/info")).json();
+    } else {
+      const res = await fetch("models/history.json");
+      info = { model: { kind: b.model }, history: res.ok ? await res.json() : null };
+    }
     const h = info.history;
     const gens = h?.generations ?? [];
     const best = h?.best?.match(/gen_(\d+)/)?.[1];
@@ -444,7 +485,9 @@ async function loadInfo() {
     $("modelLine").textContent = info.model.kind === "onnx"
       ? `현재 모델: ${best ? `${parseInt(best, 10)}세대` : "신경망"} · 자가대국 ${totalGames.toLocaleString()}판 학습` +
         (lastEval ? ` · 휴리스틱 MCTS 상대 승률 ${Math.round(lastEval.aScore * 100)}%` : "")
-      : "현재 모델: 휴리스틱 MCTS (신경망 학습 전)";
+      : info.model.kind === "loading"
+        ? "신경망 모델을 불러오는 중…"
+        : "현재 모델: 휴리스틱 MCTS (신경망 학습 전)";
     drawChart(gens);
   } catch {
     $("modelLine").textContent = "모델 정보를 불러오지 못했습니다.";
