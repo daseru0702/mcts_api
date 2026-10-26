@@ -1,0 +1,716 @@
+{
+  "best": "models\\quoridor\\gen_015",
+  "bestAnchor": 1,
+  "generations": [
+    {
+      "gen": 1,
+      "selfplay": {
+        "games": 3000,
+        "rows": 306000,
+        "avgMoves": 51,
+        "wins": {
+          "0": 1,
+          "1": 1678,
+          "2": 1321
+        },
+        "seconds": 641.154
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_001.pt",
+        "onnx": "models\\quoridor\\gen_001.onnx",
+        "rows": 306000,
+        "valPolicy": 1.7421991804534314,
+        "valValue": 0.19139507617825777,
+        "valValueVsZ": 0.6224465443729575
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_001.onnx:200",
+        "b": "heur:200",
+        "aWins": 38,
+        "bWins": 2,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 18,
+        "aScore": 0.95
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_001",
+      "bestVsHeuristic": {
+        "aScore": 0.95
+      },
+      "seconds": 62
+    },
+    {
+      "gen": 2,
+      "selfplay": {
+        "games": 400,
+        "rows": 50240,
+        "avgMoves": 62.8,
+        "wins": {
+          "0": 3,
+          "1": 208,
+          "2": 189
+        },
+        "seconds": 256.639
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_002.pt",
+        "onnx": "models\\quoridor\\gen_002.onnx",
+        "rows": 356240,
+        "valPolicy": 1.554551339379702,
+        "valValue": 0.260048848067994,
+        "valValueVsZ": 0.7807789341455199
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_002.onnx:200",
+        "b": "heur:200",
+        "aWins": 37,
+        "bWins": 3,
+        "draws": 0,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 19,
+        "aScore": 0.925
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_002.onnx:200",
+        "b": "nn:models\\quoridor\\gen_001.onnx:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_002",
+      "bestVsHeuristic": {
+        "aScore": 0.925
+      },
+      "seconds": 375
+    },
+    {
+      "gen": 3,
+      "selfplay": {
+        "games": 400,
+        "rows": 54672,
+        "avgMoves": 68.34,
+        "wins": {
+          "0": 12,
+          "1": 180,
+          "2": 208
+        },
+        "seconds": 263.728
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_003.pt",
+        "onnx": "models\\quoridor\\gen_003.onnx",
+        "rows": 410912,
+        "valPolicy": 1.3965506001498236,
+        "valValue": 0.20180277166415317,
+        "valValueVsZ": 0.5807717117900018
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_003.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_003.onnx:200",
+        "b": "nn:models\\quoridor\\gen_002.onnx:200",
+        "aWins": 38,
+        "bWins": 1,
+        "draws": 1,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 19,
+        "aScore": 0.9625
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_003",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 402
+    },
+    {
+      "gen": 4,
+      "selfplay": {
+        "games": 400,
+        "rows": 53544,
+        "avgMoves": 66.93,
+        "wins": {
+          "0": 8,
+          "1": 200,
+          "2": 192
+        },
+        "seconds": 248.443
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_004.pt",
+        "onnx": "models\\quoridor\\gen_004.onnx",
+        "rows": 464456,
+        "valPolicy": 1.3017628063332993,
+        "valValue": 0.19188874891670615,
+        "valValueVsZ": 0.5849982703464118
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_004.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_004.onnx:200",
+        "b": "nn:models\\quoridor\\gen_003.onnx:200",
+        "aWins": 3,
+        "bWins": 35,
+        "draws": 2,
+        "aWinsAsP1": 0,
+        "aWinsAsP2": 3,
+        "aScore": 0.1
+      },
+      "promoted": false,
+      "best": "models\\quoridor\\gen_003",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 401
+    },
+    {
+      "gen": 5,
+      "selfplay": {
+        "games": 400,
+        "rows": 53118,
+        "avgMoves": 66.3975,
+        "wins": {
+          "0": 4,
+          "1": 201,
+          "2": 195
+        },
+        "seconds": 241.187
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_005.pt",
+        "onnx": "models\\quoridor\\gen_005.onnx",
+        "rows": 517574,
+        "valPolicy": 1.2307386839810843,
+        "valValue": 0.1609155902704819,
+        "valValueVsZ": 0.5257387480399314
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_005.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_005.onnx:200",
+        "b": "nn:models\\quoridor\\gen_003.onnx:200",
+        "aWins": 37,
+        "bWins": 3,
+        "draws": 0,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 19,
+        "aScore": 0.925
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_005",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 351
+    },
+    {
+      "gen": 6,
+      "selfplay": {
+        "games": 400,
+        "rows": 54366,
+        "avgMoves": 67.9575,
+        "wins": {
+          "0": 17,
+          "1": 201,
+          "2": 182
+        },
+        "seconds": 239.683
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_006.pt",
+        "onnx": "models\\quoridor\\gen_006.onnx",
+        "rows": 265940,
+        "valPolicy": 1.1599828802285055,
+        "valValue": 0.16400633211860963,
+        "valValueVsZ": 0.5009363436507059
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_006.onnx:200",
+        "b": "heur:200",
+        "aWins": 39,
+        "bWins": 1,
+        "draws": 0,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 20,
+        "aScore": 0.975
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_006.onnx:200",
+        "b": "nn:models\\quoridor\\gen_005.onnx:200",
+        "aWins": 25,
+        "bWins": 15,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 5,
+        "aScore": 0.625
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_006",
+      "bestVsHeuristic": {
+        "aScore": 0.975
+      },
+      "seconds": 341
+    },
+    {
+      "gen": 7,
+      "selfplay": {
+        "games": 400,
+        "rows": 55032,
+        "avgMoves": 68.79,
+        "wins": {
+          "0": 7,
+          "1": 234,
+          "2": 159
+        },
+        "seconds": 207.487
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_007.pt",
+        "onnx": "models\\quoridor\\gen_007.onnx",
+        "rows": 270732,
+        "valPolicy": 1.0768151610173795,
+        "valValue": 0.14974429308663587,
+        "valValueVsZ": 0.4812780429849106
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_007.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_007.onnx:200",
+        "b": "nn:models\\quoridor\\gen_006.onnx:200",
+        "aWins": 38,
+        "bWins": 2,
+        "draws": 0,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 19,
+        "aScore": 0.95
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_007",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 315
+    },
+    {
+      "gen": 8,
+      "selfplay": {
+        "games": 400,
+        "rows": 52234,
+        "avgMoves": 65.2925,
+        "wins": {
+          "0": 5,
+          "1": 155,
+          "2": 240
+        },
+        "seconds": 212.771
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_008.pt",
+        "onnx": "models\\quoridor\\gen_008.onnx",
+        "rows": 268294,
+        "valPolicy": 1.0761407795580877,
+        "valValue": 0.12597289169991766,
+        "valValueVsZ": 0.41587515859858404
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_008.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_008.onnx:200",
+        "b": "nn:models\\quoridor\\gen_007.onnx:200",
+        "aWins": 19,
+        "bWins": 21,
+        "draws": 0,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 0,
+        "aScore": 0.475
+      },
+      "promoted": false,
+      "best": "models\\quoridor\\gen_007",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 333
+    },
+    {
+      "gen": 9,
+      "selfplay": {
+        "games": 400,
+        "rows": 52190,
+        "avgMoves": 65.2375,
+        "wins": {
+          "0": 3,
+          "1": 175,
+          "2": 222
+        },
+        "seconds": 173.062
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_009.pt",
+        "onnx": "models\\quoridor\\gen_009.onnx",
+        "rows": 266940,
+        "valPolicy": 1.078523989839126,
+        "valValue": 0.09854786710595516,
+        "valValueVsZ": 0.3671564496732646
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_009.onnx:200",
+        "b": "heur:200",
+        "aWins": 39,
+        "bWins": 1,
+        "draws": 0,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 20,
+        "aScore": 0.975
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_009.onnx:200",
+        "b": "nn:models\\quoridor\\gen_007.onnx:200",
+        "aWins": 21,
+        "bWins": 19,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 1,
+        "aScore": 0.525
+      },
+      "promoted": false,
+      "best": "models\\quoridor\\gen_007",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 260
+    },
+    {
+      "gen": 10,
+      "selfplay": {
+        "games": 400,
+        "rows": 53832,
+        "avgMoves": 67.29,
+        "wins": {
+          "0": 11,
+          "1": 150,
+          "2": 239
+        },
+        "seconds": 197.973
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_010.pt",
+        "onnx": "models\\quoridor\\gen_010.onnx",
+        "rows": 267654,
+        "valPolicy": 1.0485234144396391,
+        "valValue": 0.0974156087938935,
+        "valValueVsZ": 0.32335394541612567
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_010.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_010.onnx:200",
+        "b": "nn:models\\quoridor\\gen_007.onnx:200",
+        "aWins": 20,
+        "bWins": 20,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 0,
+        "aScore": 0.5
+      },
+      "promoted": false,
+      "best": "models\\quoridor\\gen_007",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 277
+    },
+    {
+      "gen": 11,
+      "selfplay": {
+        "games": 400,
+        "rows": 52418,
+        "avgMoves": 65.5225,
+        "wins": {
+          "0": 7,
+          "1": 143,
+          "2": 250
+        },
+        "seconds": 176.346
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_011.pt",
+        "onnx": "models\\quoridor\\gen_011.onnx",
+        "rows": 265706,
+        "valPolicy": 0.9585405848642736,
+        "valValue": 0.09196924303634121,
+        "valValueVsZ": 0.3202010654712199
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_011.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_011.onnx:200",
+        "b": "nn:models\\quoridor\\gen_007.onnx:200",
+        "aWins": 20,
+        "bWins": 20,
+        "draws": 0,
+        "aWinsAsP1": 0,
+        "aWinsAsP2": 20,
+        "aScore": 0.5
+      },
+      "promoted": false,
+      "best": "models\\quoridor\\gen_007",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 260
+    },
+    {
+      "gen": 12,
+      "selfplay": {
+        "games": 400,
+        "rows": 53186,
+        "avgMoves": 66.4825,
+        "wins": {
+          "0": 6,
+          "1": 175,
+          "2": 219
+        },
+        "seconds": 185.775
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_012.pt",
+        "onnx": "models\\quoridor\\gen_012.onnx",
+        "rows": 263860,
+        "valPolicy": 1.0232843129997915,
+        "valValue": 0.08985607222683786,
+        "valValueVsZ": 0.32480719126916263
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_012.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_012.onnx:200",
+        "b": "nn:models\\quoridor\\gen_007.onnx:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_012",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 267
+    },
+    {
+      "gen": 13,
+      "selfplay": {
+        "games": 400,
+        "rows": 51456,
+        "avgMoves": 64.32,
+        "wins": {
+          "0": 1,
+          "1": 254,
+          "2": 145
+        },
+        "seconds": 142.837
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_013.pt",
+        "onnx": "models\\quoridor\\gen_013.onnx",
+        "rows": 263082,
+        "valPolicy": 0.8790639001800783,
+        "valValue": 0.09758961546904993,
+        "valValueVsZ": 0.34304673964987775
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_013.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_013.onnx:200",
+        "b": "nn:models\\quoridor\\gen_012.onnx:200",
+        "aWins": 20,
+        "bWins": 20,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 0,
+        "aScore": 0.5
+      },
+      "promoted": false,
+      "best": "models\\quoridor\\gen_012",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 229
+    },
+    {
+      "gen": 14,
+      "selfplay": {
+        "games": 400,
+        "rows": 51704,
+        "avgMoves": 64.63,
+        "wins": {
+          "0": 1,
+          "1": 274,
+          "2": 125
+        },
+        "seconds": 142.525
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_014.pt",
+        "onnx": "models\\quoridor\\gen_014.onnx",
+        "rows": 262596,
+        "valPolicy": 0.8915042149356862,
+        "valValue": 0.07512777385004168,
+        "valValueVsZ": 0.2875609742559113
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_014.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_014.onnx:200",
+        "b": "nn:models\\quoridor\\gen_012.onnx:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_014",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 228
+    },
+    {
+      "gen": 15,
+      "selfplay": {
+        "games": 400,
+        "rows": 50334,
+        "avgMoves": 62.9175,
+        "wins": {
+          "0": 0,
+          "1": 223,
+          "2": 177
+        },
+        "seconds": 136.016
+      },
+      "train": {
+        "ckpt": "models\\quoridor\\gen_015.pt",
+        "onnx": "models\\quoridor\\gen_015.onnx",
+        "rows": 259098,
+        "valPolicy": 0.8166733977786181,
+        "valValue": 0.09702069622803677,
+        "valValueVsZ": 0.3633711147735346
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\quoridor\\gen_015.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\quoridor\\gen_015.onnx:200",
+        "b": "nn:models\\quoridor\\gen_014.onnx:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "promoted": true,
+      "best": "models\\quoridor\\gen_015",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 222
+    }
+  ]
+}
