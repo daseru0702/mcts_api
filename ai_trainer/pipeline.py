@@ -7,10 +7,12 @@
 #   gen k : 현재 best 모델로 자가대국 → 최근 데이터로 이어서 학습 → best 와 대결해 이기면 교체
 #           (고정 기준인 휴리스틱 MCTS 상대 승률이 best 보다 크게 떨어지면 교체하지 않음 — 자가대국 표류 방지)
 #
-#   .venv/Scripts/python ai_trainer/pipeline.py [--generations 15] [--games 400] [--sims 200]
+#   .venv/Scripts/python ai_trainer/pipeline.py [--game <id>] [--generations 15] [--games 400] [--sims 200]
 #
-# 결과:  models/quoridor/best.onnx  (서버가 사용)
-#        models/quoridor/history.json (세대별 기록, 전시 페이지에서 사용)
+# --game 은 games/ 에 게임이 하나뿐이면 생략할 수 있습니다.
+# 결과:  models/<game>/best.onnx  (서버·웹이 사용)
+#        models/<game>/history.json (세대별 기록, 웹 페이지에서 사용)
+#        data/<game>/gen_XXX.bin   (자가대국 데이터)
 
 import argparse
 import json
@@ -21,12 +23,27 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA = os.path.join(ROOT, "data")
-MODELS = os.path.join(ROOT, "models", "quoridor")
-HISTORY = os.path.join(MODELS, "history.json")
-BEST = os.path.join(MODELS, "best.onnx")
 NODE = "node"
 PY = sys.executable
+# main() 에서 게임에 맞게 채웁니다
+GAME = DATA = MODELS = HISTORY = BEST = None
+
+
+def list_games():
+    games_dir = os.path.join(ROOT, "games")
+    return sorted(d for d in os.listdir(games_dir)
+                  if os.path.isfile(os.path.join(games_dir, d, "index.js")))
+
+
+def resolve_game(arg):
+    ids = list_games()
+    if arg:
+        if arg not in ids:
+            raise SystemExit(f"게임 '{arg}' 이 없습니다. 가능한 게임: {', '.join(ids)}")
+        return arg
+    if len(ids) == 1:
+        return ids[0]
+    raise SystemExit(f"--game <이름> 을 지정하세요. 가능한 게임: {', '.join(ids)}")
 
 
 def run(cmd):
@@ -61,20 +78,21 @@ def save_history(h):
 
 
 def data_file(i):
-    return os.path.join("data", f"gen_{i:03d}.bin")
+    return os.path.join("data", GAME, f"gen_{i:03d}.bin")
 
 
 def model_base(i):
-    return os.path.join("models", "quoridor", f"gen_{i:03d}")
+    return os.path.join("models", GAME, f"gen_{i:03d}")
 
 
 def arena(a, b, games):
-    out = run([NODE, "ai_trainer/arena.js", f"--a={a}", f"--b={b}", f"--games={games}"])
+    out = run([NODE, "ai_trainer/arena.js", f"--game={GAME}", f"--a={a}", f"--b={b}", f"--games={games}"])
     return json.loads(out)
 
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--game", default=None, help="games/<id> (하나뿐이면 생략 가능)")
     ap.add_argument("--generations", type=int, default=15, help="학습할 신경망 세대 수")
     ap.add_argument("--games0", type=int, default=3000, help="0세대(휴리스틱) 자가대국 판 수")
     ap.add_argument("--games", type=int, default=400, help="세대당 자가대국 판 수")
@@ -87,6 +105,14 @@ def main():
     ap.add_argument("--anchor-tolerance", type=float, default=0.1,
                     help="휴리스틱 상대 승률이 best 보다 이만큼 넘게 낮으면 교체하지 않음")
     args = ap.parse_args()
+
+    global GAME, DATA, MODELS, HISTORY, BEST
+    GAME = resolve_game(args.game)
+    DATA = os.path.join(ROOT, "data", GAME)
+    MODELS = os.path.join(ROOT, "models", GAME)
+    HISTORY = os.path.join(MODELS, "history.json")
+    BEST = os.path.join(MODELS, "best.onnx")
+    print(f"게임: {GAME}", flush=True)
 
     os.makedirs(DATA, exist_ok=True)
     os.makedirs(MODELS, exist_ok=True)
@@ -102,7 +128,7 @@ def main():
         # 1) 자가대국: 데이터 gen-1 (0세대는 휴리스틱)
         src = gen - 1
         if not os.path.exists(data_file(src)):
-            cmd = [NODE, "ai_trainer/selfplay.js", f"--out={data_file(src)}", f"--sims={args.sims}"]
+            cmd = [NODE, "ai_trainer/selfplay.js", f"--game={GAME}", f"--out={data_file(src)}", f"--sims={args.sims}"]
             if src == 0:
                 cmd.append(f"--games={args.games0}")
             else:

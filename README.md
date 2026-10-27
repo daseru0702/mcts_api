@@ -8,8 +8,9 @@ AlphaZero 방식(PUCT MCTS + 정책/가치 신경망 + 자가대국 강화학습
 서버 없이 브라우저 안에서(WebAssembly) 신경망과 MCTS 가 돌아갑니다. `main` 에 푸시하면 GitHub Actions 가 자동 배포합니다.
 
 ```
-games/quoridor/   규칙 엔진(QuoridorGame) + 신경망 인코딩(QuoridorAdapter)  ← 브라우저/Node 공용
-common/           mcts.js (AlphaZero PUCT), mcts_pure.js (순수 MCTS 기준선), evaluators.js (ONNX/휴리스틱)
+games/<id>/       게임 하나 = 폴더 하나. 공통 코드는 이 폴더를 이름으로만 불러옵니다
+  quoridor/       index.js(설명서) · QuoridorGame(규칙) · QuoridorAdapter(인코딩) · view.js/css(보드 화면) · tests.js
+common/           mcts.js (AlphaZero PUCT), games.js (게임 로더), evaluators.js (ONNX/휴리스틱), mcts_pure.js (기준선)
 ai_trainer/       selfplay.js (자가대국), train.py (PyTorch 학습→ONNX), arena.js (대결), pipeline.py (세대 반복)
 ai_server/        Express 서버: 웹페이지 + /api/move (전시장 PC 용, 탐색이 더 빠름)
 client/           전시용 웹페이지 (서버가 없으면 ai-worker.js 로 브라우저에서 탐색)
@@ -32,14 +33,14 @@ python -m venv .venv
 npm start
 ```
 
-http://localhost:3000 — `models/quoridor/best.onnx` 를 사용합니다 (없으면 휴리스틱 MCTS).
+http://localhost:3000 (`?game=<id>` 로 게임 선택, 게임이 여러 개면 상단에 선택 상자) — `models/<id>/best.onnx` 를 사용합니다 (없으면 휴리스틱 MCTS).
 모델 파일이 바뀌면 서버가 10초 안에 자동으로 다시 불러옵니다.
 AI 끼리 두는 모습은 "AI vs AI 데모" 버튼으로 볼 수 있습니다.
 
 ## 학습
 
 ```bash
-npm run train            # = .venv/Scripts/python ai_trainer/pipeline.py
+npm run train            # = .venv/Scripts/python ai_trainer/pipeline.py [--game <id>]
 ```
 
 1. **0세대**: 최단경로 휴리스틱을 평가기로 쓰는 MCTS 로 3000판 자가대국
@@ -55,9 +56,9 @@ z 만 쓰면 벽 배치가 게임 내내 남아 있어 신경망이 "어떤 게�
 개별 실행:
 
 ```bash
-node ai_trainer/selfplay.js --out=data/test.bin --model=models/quoridor/best.onnx --games=50 --sims=200
-.venv/Scripts/python ai_trainer/train.py --data data/test.bin --out-ckpt m.pt --out-onnx m.onnx
-node ai_trainer/arena.js --a=nn:models/quoridor/best.onnx:300 --b=heur:300 --games=40
+node ai_trainer/selfplay.js --game=quoridor --out=data/quoridor/test.bin --model=models/quoridor/best.onnx --games=50 --sims=200
+.venv/Scripts/python ai_trainer/train.py --data data/quoridor/test.bin --out-ckpt m.pt --out-onnx m.onnx
+node ai_trainer/arena.js --game=quoridor --a=nn:models/quoridor/best.onnx:300 --b=heur:300 --games=40
 npm test
 ```
 
@@ -75,7 +76,45 @@ npm test
 
 세대별 기록은 `models/quoridor/history.json` 에 있습니다.
 
-## 신경망 입출력
+## 게임 추가하기
+
+공통 코드(학습·서버·웹·테스트·배포)는 특정 게임을 import 하지 않고 `games/<id>/index.js` 를 이름으로 불러옵니다.
+새 게임은 **기존 파일을 고치지 않고** `games/<id>/` 폴더만 추가하면 연결됩니다.
+`--game` 은 게임이 하나뿐이면 생략할 수 있습니다.
+
+```
+games/<id>/
+  index.js    설명서: export default { id, name, title, subtitle, Adapter, selfplay, arena, view, hint, loseTip }
+  view.js     보드 화면: export function createView({ svg, onMove, setHint }) → { render(ctx), notation(move), playerInfo?(state, p) }
+  view.css    (선택) 보드 스타일 — view.js 가 불러옴
+  tests.js    (선택) 게임 규칙 테스트 — npm test 가 자동 실행
+```
+
+`Adapter` 가 갖춰야 할 것 (MCTS·학습·웹이 이것만 사용):
+
+| 항목 | 설명 |
+|---|---|
+| `new Adapter(json?)` | 새 게임, 또는 `toJSON()` 결과로 복원 |
+| `static INPUT_SHAPE` | 신경망 입력 `[C, H, W]` |
+| `static POLICY_SIZE` | 정책 출력 크기 |
+| `static SYMMETRIES` | (선택) 데이터 증강용 대칭 목록, 기본 `[false]` |
+| `clone()`, `applyMove(m)`, `getPossibleMoves()` | 상태 복제, 수 두기, 합법 수 |
+| `isTerminal()`, `getWinner()`, `getCurrentPlayer()`, `getMoveCount()` | 승자는 1/2, 진행 중 0. 플레이어 1·2가 번갈아 둠 |
+| `encode(sym)`, `moveToIndex(m, sym)` | 둘 차례 기준 입력 텐서, 수 → 정책 인덱스 |
+| `toJSON()` | 상태 직렬화 (복사본) |
+| `isLegalMove(m)`, `heuristicValue()`, `heuristicPriors(moves)`, `adjudicateValue()` | (선택) 합법성 검사, 0세대용 휴리스틱, 수 제한 판정 |
+
+추가한 뒤에는:
+
+```bash
+npm test                                  # 어댑터 규약 + 그 게임의 tests.js
+npm run train -- --game <id>              # data/<id>/, models/<id>/ 에 학습
+npm start                                 # http://localhost:3000/?game=<id>
+```
+
+한계: MCTS 는 두 명이 번갈아 두는 제로섬 게임(한쪽 승 = 다른 쪽 패)을 가정합니다. 3인 이상 게임은 `common/mcts.js` 의 역전파를 바꿔야 합니다.
+
+## 신경망 입출력 (쿼리도)
 
 - 입력 `8×9×9`, 항상 **둘 차례인 플레이어 기준**(P2 차례면 상하 반전):
   내 말 / 상대 말 / 가로벽 / 세로벽 / 내 남은 벽 / 상대 남은 벽 / 내 목표까지 거리맵 / 상대 거리맵

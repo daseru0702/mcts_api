@@ -1,10 +1,19 @@
-// tests/run_tests.js — node tests/run_tests.js
+// tests/run_tests.js — npm test
+//
+// games/ 의 모든 게임에 대해
+//   1) 어댑터 규약 테스트 (공통 코드가 기대하는 동작)
+//   2) games/<id>/tests.js 가 있으면 그 게임의 규칙 테스트
+// 를 실행합니다. 새 게임을 추가하면 자동으로 포함됩니다.
 import assert from "assert/strict";
-import { QuoridorGame } from "../games/quoridor/QuoridorGame.js";
-import { QuoridorAdapter, POLICY_SIZE } from "../games/quoridor/QuoridorAdapter.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath, pathToFileURL } from "url";
+import { loadGame } from "../common/games.js";
+import { listGameIds } from "../common/game_registry.js";
 import { MCTS } from "../common/mcts.js";
-import { HeuristicEvaluator } from "../common/evaluators.js";
+import { HeuristicEvaluator } from "../common/heuristic_evaluator.js";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
 async function test(name, fn) {
   try {
@@ -17,135 +26,76 @@ async function test(name, fn) {
   }
 }
 
-function key(m) {
-  return m.type === "move" ? `m${m.x},${m.y}` : `w${m.x},${m.y}${m.orientation}`;
-}
-
-function randomGame(maxMoves = 120, wallBias = 0.4) {
-  const g = new QuoridorGame();
+function randomPlayout(game, maxMoves) {
+  const s = new game.Adapter();
   const states = [];
-  while (!g.isOver() && g.moveCount < maxMoves) {
-    states.push(g.clone());
-    const pawn = g.getLegalPawnMoves();
-    const walls = g.getLegalWallMoves();
-    const pool = walls.length && Math.random() < wallBias ? walls : pawn;
-    g.applyMove(pool[Math.floor(Math.random() * pool.length)]);
+  while (!s.isTerminal() && s.getMoveCount() < maxMoves) {
+    states.push(s.clone());
+    const moves = s.getPossibleMoves();
+    s.applyMove(moves[Math.floor(Math.random() * moves.length)]);
   }
-  return states;
+  return { states, final: s };
 }
 
-await test("빠른 벽 생성 = 전수 검사 결과", () => {
-  for (let t = 0; t < 30; t++) {
-    for (const g of randomGame()) {
-      const fast = new Set(g.getLegalWallMoves().map(key));
-      const brute = new Set();
-      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) for (const o of ["h", "v"]) {
-        const m = { type: "wall", x, y, orientation: o };
-        if (g.isValidWallPlacement(m)) brute.add(key(m));
+async function contractTests(game) {
+  const A = game.Adapter;
+  const stateSize = game.inputShape.reduce((a, b) => a * b, 1);
+  const maxMoves = game.selfplay.maxMoves ?? 200;
+
+  await test("encode() 길이 = INPUT_SHAPE, 정책 인덱스는 고유하고 범위 안", () => {
+    for (let t = 0; t < 10; t++) {
+      for (const s of randomPlayout(game, maxMoves).states) {
+        const moves = s.getPossibleMoves();
+        assert.ok(moves.length > 0, "끝나지 않은 상태에는 합법 수가 있어야 함");
+        for (const sym of game.symmetries) {
+          assert.equal(s.encode(sym).length, stateSize);
+          const idx = moves.map(m => s.moveToIndex(m, sym));
+          assert.equal(new Set(idx).size, idx.length, "같은 상태의 서로 다른 수가 같은 인덱스");
+          assert.ok(idx.every(i => Number.isInteger(i) && i >= 0 && i < game.policySize));
+        }
       }
-      assert.deepEqual([...fast].sort(), [...brute].sort());
     }
-  }
-});
+  });
 
-await test("점프와 대각선 이동", () => {
-  const g = new QuoridorGame();
-  g.pawns[1] = { x: 4, y: 4 };
-  g.pawns[2] = { x: 4, y: 5 };
-  assert.ok(g.getLegalPawnMoves(1).some(m => m.x === 4 && m.y === 6));
-  // 상대 뒤에 가로벽 → 대각선
-  g.applyMove({ type: "wall", x: 3, y: 5, orientation: "h" });
-  g.currentPlayer = 1;
-  const keys = g.getLegalPawnMoves(1).map(key).sort();
-  assert.deepEqual(keys, ["m3,4", "m3,5", "m4,3", "m5,4", "m5,5"].sort());
-});
-
-await test("벽은 이동을 막고 경로를 완전히 막을 수 없음", () => {
-  const g = new QuoridorGame();
-  g.applyMove({ type: "wall", x: 3, y: 0, orientation: "h" });
-  assert.ok(!g.canStep(4, 0, 0, 1));
-  assert.ok(g.canStep(5, 0, 0, 1));
-  const g2 = new QuoridorGame();
-  // y=0 아래를 전부 막는 시도: 마지막 벽은 불가능해야 함
-  for (const x of [0, 2, 4, 6]) {
-    g2.currentPlayer = 2;
-    assert.ok(g2.isValidWallPlacement({ type: "wall", x, y: 0, orientation: "h" }));
-    g2.applyMove({ type: "wall", x, y: 0, orientation: "h" });
-  }
-  g2.currentPlayer = 2;
-  g2.pawns[1] = { x: 8, y: 0 };
-  g2.applyMove({ type: "wall", x: 7, y: 0, orientation: "v" });
-  g2.currentPlayer = 2;
-  assert.ok(!g2.isValidWallPlacement({ type: "wall", x: 7, y: 1, orientation: "v" }) ||
-            g2.shortestDistance(1) > 0);
-});
-
-await test("JSON 왕복", () => {
-  for (const g of randomGame().slice(-5)) {
-    const r = QuoridorGame.fromJSON(JSON.parse(JSON.stringify(g.toJSON())));
-    assert.deepEqual(r.getAllMoves().map(key), g.getAllMoves().map(key));
-    assert.deepEqual(Array.from(r.hBlock), Array.from(g.hBlock));
-    assert.deepEqual(Array.from(r.vBlock), Array.from(g.vBlock));
-  }
-});
-
-await test("toJSON 스냅숏은 이후 수에 영향받지 않음 (무르기)", () => {
-  const g = new QuoridorGame();
-  const snap = g.toJSON();
-  g.applyMove({ type: "move", x: 4, y: 1 });
-  g.applyMove({ type: "wall", x: 3, y: 3, orientation: "h" });
-  const r = QuoridorGame.fromJSON(snap);
-  assert.deepEqual(r.pawns[1], { x: 4, y: 0 });
-  assert.equal(r.placedWalls.length, 0);
-  assert.equal(r.wallCounts[2], 10);
-  assert.equal(r.currentPlayer, 1);
-});
-
-await test("정책 인덱스: 고유, 범위 내, 좌우반전 일관성", () => {
-  for (const g of randomGame()) {
-    const s = new QuoridorAdapter(g);
-    const moves = s.getPossibleMoves();
-    const idx = moves.map(m => s.moveToIndex(m));
-    assert.equal(new Set(idx).size, idx.length);
-    assert.ok(idx.every(i => i >= 0 && i < POLICY_SIZE));
-
-    // 좌우 반전한 게임을 만들어 인코딩/인덱스가 mirror=true 결과와 같은지 확인
-    const m = new QuoridorGame();
-    m.currentPlayer = g.currentPlayer;
-    m.wallCounts = { ...g.wallCounts };
-    m.pawns = { 1: { x: 8 - g.pawns[1].x, y: g.pawns[1].y }, 2: { x: 8 - g.pawns[2].x, y: g.pawns[2].y } };
-    for (const w of g.placedWalls) {
-      m._setWallBlocks(7 - w.x, w.y, w.orientation, 1);
-      (w.orientation === "h" ? m.hWalls : m.vWalls)[w.y * 8 + 7 - w.x] = 1;
-      m.placedWalls.push({ ...w, x: 7 - w.x });
+  await test("clone() 은 독립적, toJSON() → new Adapter() 왕복", () => {
+    const { states } = randomPlayout(game, maxMoves);
+    for (const s of states.slice(-5)) {
+      const before = JSON.stringify(s.toJSON());
+      const c = s.clone();
+      c.applyMove(c.getPossibleMoves()[0]);
+      assert.equal(JSON.stringify(s.toJSON()), before, "clone 에 둔 수가 원본을 바꿈");
+      const r = new A(JSON.parse(before));
+      assert.deepEqual(r.getPossibleMoves(), s.getPossibleMoves());
+      assert.equal(r.getCurrentPlayer(), s.getCurrentPlayer());
     }
-    const sm = new QuoridorAdapter(m);
-    assert.deepEqual(Array.from(sm.encode()), Array.from(s.encode(true)));
-    const mirroredIdx = new Set(moves.map(mv => s.moveToIndex(mv, true)));
-    assert.deepEqual([...new Set(sm.getPossibleMoves().map(mv => sm.moveToIndex(mv)))].sort(), [...mirroredIdx].sort());
-  }
-});
+  });
 
-await test("canonical 인코딩: P1/P2 대칭 위치는 같은 입력", () => {
-  const a = new QuoridorGame();
-  const b = new QuoridorGame();
-  b.currentPlayer = 2;
-  assert.deepEqual(Array.from(new QuoridorAdapter(a).encode()), Array.from(new QuoridorAdapter(b).encode()));
-});
+  await test("끝난 상태의 getWinner() 는 1 또는 2, 진행 중은 0", () => {
+    for (let t = 0; t < 10; t++) {
+      const { states, final } = randomPlayout(game, maxMoves * 5);
+      assert.ok(states.every(s => s.getWinner() === 0));
+      if (final.isTerminal()) assert.ok([1, 2].includes(final.getWinner()));
+    }
+  });
 
-await test("MCTS: 한 수 만에 이기는 수를 찾음 (양쪽 플레이어)", async () => {
-  for (const p of [1, 2]) {
-    const g = new QuoridorGame();
-    g.pawns[1] = { x: 0, y: p === 1 ? 7 : 3 };
-    g.pawns[2] = { x: 8, y: p === 2 ? 1 : 5 };
-    g.currentPlayer = p;
-    const mcts = new MCTS(new HeuristicEvaluator(), { simulations: 200 });
-    const root = await mcts.search(new QuoridorAdapter(g));
+  await test("MCTS 가 합법 수를 고름 (휴리스틱 평가기)", async () => {
+    const s = new A();
+    const mcts = new MCTS(new HeuristicEvaluator(), { simulations: 50 });
+    const root = await mcts.search(s);
     const mv = mcts.bestMove(root);
-    assert.equal(mv.type, "move");
-    assert.equal(mv.y, p === 1 ? 8 : 0);
-    assert.ok(mcts.stats(root).value > 0.9);
+    assert.ok(s.getPossibleMoves().some(m => JSON.stringify(m) === JSON.stringify(mv)));
+  });
+}
+
+for (const id of listGameIds()) {
+  const game = await loadGame(id);
+  console.log(`\n[${id}] 어댑터 규약`);
+  await contractTests(game);
+  const own = path.join(ROOT, "games", id, "tests.js");
+  if (fs.existsSync(own)) {
+    console.log(`[${id}] 게임 규칙`);
+    await (await import(pathToFileURL(own).href)).default(test);
   }
-});
+}
 
 console.log(`\n${passed} passed${process.exitCode ? ", 일부 실패" : ""}`);
