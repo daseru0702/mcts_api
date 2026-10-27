@@ -109,27 +109,7 @@ body {
 .status.over .dot { background: var(--wall); }
 @keyframes pulse { 50% { opacity: .3; } }
 
-/* ── board svg ── */
-.cell { fill: var(--cell); transition: fill .15s; }
-.cell.legal { fill: var(--cell-hi); cursor: pointer; }
-.legal-dot { fill: var(--legal); opacity: .85; pointer-events: none; }
-.cell.last { fill: var(--cell-hi); }
-.goal-human { fill: var(--human); opacity: .9; }
-.goal-ai { fill: var(--ai); opacity: .9; }
-.coord { fill: var(--muted); font: 500 3px "JetBrains Mono", monospace; }
-.wall { fill: var(--wall); }
-.wall.last { stroke: #fff; stroke-width: .5; }
-.wall-ghost { fill: var(--wall-ghost); pointer-events: none; }
-.pawn { transition: transform .35s cubic-bezier(.3,.7,.3,1); }
-.pawn circle.body { stroke: rgba(0,0,0,.25); stroke-width: .6; }
-.pawn.human circle.body { fill: var(--human); }
-.pawn.ai circle.body { fill: var(--ai); }
-.pawn circle.shine { fill: rgba(255,255,255,.35); }
-.cand { pointer-events: none; }
-.cand-move { fill: none; stroke: var(--ai); stroke-width: .8; stroke-dasharray: 1.4 1; }
-.cand-wall { fill: var(--ai); opacity: .45; }
-.cand-label { fill: var(--ai); font: 700 3.2px "JetBrains Mono", monospace; text-anchor: middle; paint-order: stroke; stroke: var(--board); stroke-width: .8; }
-.cand-best .cand-label { fill: #fff; }
+/* 보드 자체의 스타일은 games/<game>/view.css 에 있습니다 */
 
 .overlay {
   position: absolute; inset: 0; display: grid; place-items: center;
@@ -157,9 +137,6 @@ body {
 .pawn-icon.human { background: var(--human); }
 .pawn-icon.ai { background: var(--ai); }
 .pname { font-weight: 700; font-size: 15px; }
-.walls { display: flex; gap: 2px; margin-top: 4px; }
-.walls i { width: 5px; height: 14px; border-radius: 2px; background: var(--wall); }
-.walls i.used { background: var(--line); }
 .vs { font-weight: 900; color: var(--muted); font-size: 13px; }
 
 .gauge { position: relative; height: 18px; border-radius: 9px; overflow: hidden; display: flex; background: var(--line); }
@@ -220,3 +197,5 @@ button.demo.on { background: var(--ai); color: #fff; }
   .top { padding: 16px 16px 4px; }
   .brand h1 { font-size: 22px; }
 }
+
+.game-select { font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }

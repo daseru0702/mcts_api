@@ -27,6 +27,10 @@ export class QuoridorAdapter {
   static IN_CHANNELS = IN_CHANNELS;
   static BOARD_SIZE = N;
   static POLICY_SIZE = POLICY_SIZE;
+  /** 신경망 입력 [채널, 세로, 가로] — 공통 코드(평가기·학습)는 이 값만 사용 */
+  static INPUT_SHAPE = [IN_CHANNELS, N, N];
+  /** 데이터 증강에 쓰는 대칭 변환: encode(sym)/moveToIndex(move, sym) 에 그대로 전달 */
+  static SYMMETRIES = [false, true];
 
   constructor(stateOrJson = null) {
     if (stateOrJson instanceof QuoridorGame) {
@@ -66,6 +70,17 @@ export class QuoridorAdapter {
 
   getMoveCount() {
     return this.game.moveCount;
+  }
+
+  isLegalMove(move) {
+    return this.game.isLegalMove(move);
+  }
+
+  /** 수 제한으로 끝난 판의 판정값 (둘 차례 기준, [-0.5, 0.5]): 최단거리 차이 */
+  adjudicateValue() {
+    const g = this.game;
+    const me = g.currentPlayer;
+    return 0.5 * Math.tanh((g.shortestDistance(3 - me) - g.shortestDistance(me)) / 3);
   }
 
   /** 끝난 게임에서 player 기준 보상 (+1 승 / -1 패) */

@@ -3,11 +3,12 @@
 #
 # 자가대국 데이터(.bin)로 정책/가치 신경망을 학습하고 ONNX 로 내보냅니다.
 #
-#   .venv/Scripts/python ai_trainer/train.py --data data/gen_000.bin data/gen_001.bin \
-#       --out-ckpt models/quoridor/gen_002.pt --out-onnx models/quoridor/gen_002.onnx \
-#       [--init models/quoridor/gen_001.pt] [--epochs 4]
+#   .venv/Scripts/python ai_trainer/train.py --data data/<game>/gen_000.bin data/<game>/gen_001.bin \
+#       --out-ckpt models/<game>/gen_002.pt --out-onnx models/<game>/gen_002.onnx \
+#       [--init models/<game>/gen_001.pt] [--epochs 4]
 #
 # .bin 형식은 ai_trainer/selfplay.js 참고: float32 행 [state | pi | z | q]
+# 입력 크기·정책 크기는 게임마다 다르며, selfplay.js 가 .bin 옆에 남긴 .json(stateShape, policySize)에서 읽습니다.
 #
 # 가치 목표 = z_weight·z + (1-z_weight)·q
 #   z(최종 승패)만 쓰면 신경망이 벽 배치로 '어느 게임인지'를 외워 과적합되므로
@@ -24,11 +25,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-IN_CHANNELS = 8
-BOARD = 9
-POLICY_SIZE = 81 + 2 * 64
-STATE_SIZE = IN_CHANNELS * BOARD * BOARD
-ROW = STATE_SIZE + POLICY_SIZE + 2
 
 
 class ResBlock(nn.Module):
@@ -45,22 +41,27 @@ class ResBlock(nn.Module):
         return F.relu(x + y)
 
 
-class QuoridorNet(nn.Module):
-    def __init__(self, channels=64, blocks=6):
+class PolicyValueNet(nn.Module):
+    """게임 무관 정책·가치 ResNet. in_shape = (C, H, W)"""
+
+    def __init__(self, in_shape, policy_size, channels=64, blocks=6):
         super().__init__()
+        c, h, w = in_shape
+        self.in_shape = tuple(in_shape)
+        self.policy_size = policy_size
         self.stem = nn.Sequential(
-            nn.Conv2d(IN_CHANNELS, channels, 3, padding=1, bias=False),
+            nn.Conv2d(c, channels, 3, padding=1, bias=False),
             nn.BatchNorm2d(channels),
             nn.ReLU(),
         )
         self.body = nn.Sequential(*[ResBlock(channels) for _ in range(blocks)])
         self.p_head = nn.Sequential(
             nn.Conv2d(channels, 4, 1, bias=False), nn.BatchNorm2d(4), nn.ReLU(), nn.Flatten(),
-            nn.Linear(4 * BOARD * BOARD, POLICY_SIZE),
+            nn.Linear(4 * h * w, policy_size),
         )
         self.v_head = nn.Sequential(
             nn.Conv2d(channels, 2, 1, bias=False), nn.BatchNorm2d(2), nn.ReLU(), nn.Flatten(),
-            nn.Linear(2 * BOARD * BOARD, 128), nn.ReLU(),
+            nn.Linear(2 * h * w, 128), nn.ReLU(),
             nn.Linear(128, 1), nn.Tanh(),
         )
 
@@ -69,22 +70,38 @@ class QuoridorNet(nn.Module):
         return self.p_head(h), self.v_head(h)
 
 
+def read_meta(path):
+    meta_path = os.path.splitext(path)[0] + ".json"
+    with open(meta_path, encoding="utf-8") as f:
+        meta = json.load(f)
+    if "stateShape" not in meta:
+        raise ValueError(f"{meta_path}: stateShape 가 없습니다 (selfplay.js 로 다시 생성하세요)")
+    return tuple(meta["stateShape"]), int(meta["policySize"])
+
+
 def load_data(paths):
+    """→ (in_shape, policy_size, states, pis, zs, qs)"""
+    shapes = {read_meta(p) for p in paths}
+    if len(shapes) != 1:
+        raise ValueError(f"데이터 파일의 크기 정보가 서로 다릅니다: {shapes}")
+    in_shape, policy_size = shapes.pop()
+    state_size = int(np.prod(in_shape))
+    row = state_size + policy_size + 2
     arrays = []
     for p in paths:
         a = np.fromfile(p, dtype=np.float32)
-        if a.size % ROW != 0:
-            raise ValueError(f"{p}: 크기가 행 길이({ROW})의 배수가 아닙니다")
-        arrays.append(a.reshape(-1, ROW))
+        if a.size % row != 0:
+            raise ValueError(f"{p}: 크기가 행 길이({row})의 배수가 아닙니다")
+        arrays.append(a.reshape(-1, row))
         print(f"  {p}: {arrays[-1].shape[0]} rows")
     data = np.concatenate(arrays)
-    return (data[:, :STATE_SIZE], data[:, STATE_SIZE:STATE_SIZE + POLICY_SIZE],
+    return (in_shape, policy_size, data[:, :state_size], data[:, state_size:state_size + policy_size],
             data[:, -2:-1], data[:, -1:])
 
 
 def export_onnx(model, path):
     model.eval()
-    dummy = torch.zeros(1, IN_CHANNELS, BOARD, BOARD)
+    dummy = torch.zeros(1, *model.in_shape)
     m = model.to("cpu")
     torch.onnx.export(
         m, dummy, path,
@@ -113,23 +130,27 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"device={device}")
 
-    states, pis, zs, qs = load_data(args.data)
+    in_shape, policy_size, states, pis, zs, qs = load_data(args.data)
+    print(f"input={in_shape} policy={policy_size}")
     n = states.shape[0]
     # 행 순서 = 게임 순서이므로 끝 5% 를 검증용으로 (같은 게임이 섞이지 않게)
     n_val = max(1, int(n * 0.05))
     perm_train = np.arange(n - n_val)
-    X = torch.from_numpy(states).view(-1, IN_CHANNELS, BOARD, BOARD).to(device)
+    X = torch.from_numpy(states).view(-1, *in_shape).to(device)
     P = torch.from_numpy(pis).to(device)
     Zraw = torch.from_numpy(zs).to(device)
     Z = args.z_weight * Zraw + (1 - args.z_weight) * torch.from_numpy(qs).to(device)
 
     if args.init and os.path.exists(args.init):
         ck = torch.load(args.init, map_location="cpu")
-        model = QuoridorNet(ck["channels"], ck["blocks"])
+        ck_shape = tuple(ck.get("in_shape", in_shape))
+        if ck_shape != tuple(in_shape) or ck.get("policy_size", policy_size) != policy_size:
+            raise ValueError(f"체크포인트 크기 {ck_shape} 가 데이터 {in_shape} 와 다릅니다")
+        model = PolicyValueNet(in_shape, policy_size, ck["channels"], ck["blocks"])
         model.load_state_dict(ck["model"])
         print(f"init from {args.init}")
     else:
-        model = QuoridorNet(args.channels, args.blocks)
+        model = PolicyValueNet(in_shape, policy_size, args.channels, args.blocks)
     model.to(device)
 
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
@@ -179,7 +200,8 @@ def main():
 
     os.makedirs(os.path.dirname(args.out_ckpt) or ".", exist_ok=True)
     torch.save({"model": model.state_dict(), "channels": model.stem[0].out_channels,
-                "blocks": len(model.body)}, args.out_ckpt)
+                "blocks": len(model.body), "in_shape": list(in_shape), "policy_size": policy_size},
+               args.out_ckpt)
     export_onnx(model, args.out_onnx)
     print(json.dumps({"ckpt": args.out_ckpt, "onnx": args.out_onnx, "rows": n,
                       "valPolicy": vp, "valValue": vv, "valValueVsZ": vz}))

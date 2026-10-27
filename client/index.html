@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Quoridor Zero</title>
+  <title>MCTS Zero</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
@@ -14,11 +14,12 @@
     <div class="brand">
       <span class="logo" aria-hidden="true"></span>
       <div>
-        <h1>Quoridor Zero</h1>
-        <p>몬테카를로 트리 탐색 + 신경망으로 스스로 학습한 쿼리도 AI</p>
+        <h1 id="gameTitle">MCTS Zero</h1>
+        <p id="gameSubtitle">몬테카를로 트리 탐색 + 신경망으로 스스로 학습한 보드게임 AI</p>
       </div>
     </div>
     <div class="top-actions">
+      <select class="game-select hidden" id="gameSelect" aria-label="게임 선택"></select>
       <button class="ghost" id="btnFullscreen" title="전체 화면">⛶</button>
     </div>
   </header>
@@ -29,7 +30,7 @@
         <span class="dot"></span><span id="statusText">게임 준비 중…</span>
       </div>
       <div class="board-frame">
-        <svg id="board" viewBox="-5 -5 124 124" aria-label="쿼리도 보드"></svg>
+        <svg id="board" aria-label="게임 보드"></svg>
         <div class="overlay hidden" id="overlay">
           <div class="overlay-card">
             <div class="overlay-title" id="overlayTitle"></div>
@@ -38,7 +39,7 @@
           </div>
         </div>
       </div>
-      <p class="hint" id="hint">초록 점을 눌러 말을 옮기거나, 칸 사이 홈을 눌러 벽을 세우세요.</p>
+      <p class="hint" id="hint"></p>
     </section>
 
     <aside class="panel">
@@ -47,7 +48,7 @@
           <span class="pawn-icon human"></span>
           <div class="pinfo">
             <div class="pname">나</div>
-            <div class="walls" id="wallsHuman"></div>
+            <div id="infoHuman"></div>
           </div>
         </div>
         <div class="vs">VS</div>
@@ -55,7 +56,7 @@
           <span class="pawn-icon ai"></span>
           <div class="pinfo">
             <div class="pname" id="aiName">AI</div>
-            <div class="walls" id="wallsAI"></div>
+            <div id="infoAI"></div>
           </div>
         </div>
       </div>

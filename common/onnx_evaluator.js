@@ -10,8 +10,7 @@ export class OnnxEvaluator {
   }
 
   async evaluate(state, moves) {
-    const C = state.constructor.IN_CHANNELS, B = state.constructor.BOARD_SIZE;
-    const input = new this.ort.Tensor("float32", state.encode(), [1, C, B, B]);
+    const input = new this.ort.Tensor("float32", state.encode(), [1, ...state.constructor.INPUT_SHAPE]);
     const out = await this.session.run({ input });
     const logits = out.policy.data;
     const value = out.value.data[0];

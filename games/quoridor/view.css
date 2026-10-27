@@ -1,0 +1,25 @@
+/* games/quoridor/view.css — 쿼리도 보드 전용 스타일 (색은 client/style.css 의 토큰 사용) */
+
+.cell { fill: var(--cell); transition: fill .15s; }
+.cell.legal { fill: var(--cell-hi); cursor: pointer; }
+.legal-dot { fill: var(--legal); opacity: .85; pointer-events: none; }
+.cell.last { fill: var(--cell-hi); }
+.goal-human { fill: var(--human); opacity: .9; }
+.goal-ai { fill: var(--ai); opacity: .9; }
+.wall { fill: var(--wall); }
+.wall.last { stroke: #fff; stroke-width: .5; }
+.wall-ghost { fill: var(--wall-ghost); pointer-events: none; }
+.pawn { transition: transform .35s cubic-bezier(.3,.7,.3,1); }
+.pawn circle.body { stroke: rgba(0,0,0,.25); stroke-width: .6; }
+.pawn.human circle.body { fill: var(--human); }
+.pawn.ai circle.body { fill: var(--ai); }
+.pawn circle.shine { fill: rgba(255,255,255,.35); }
+.cand { pointer-events: none; }
+.cand-move { fill: none; stroke: var(--ai); stroke-width: .8; stroke-dasharray: 1.4 1; }
+.cand-wall { fill: var(--ai); opacity: .45; }
+.cand-label { fill: var(--ai); font: 700 3.2px "JetBrains Mono", monospace; text-anchor: middle; paint-order: stroke; stroke: var(--board); stroke-width: .8; }
+.cand-best .cand-label { fill: #fff; }
+
+.q-walls { display: flex; gap: 2px; margin-top: 4px; }
+.q-walls i { width: 5px; height: 14px; border-radius: 2px; background: var(--wall); }
+.q-walls i.used { background: var(--line); }

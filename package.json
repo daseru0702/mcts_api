@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "AlphaZero-style MCTS for Quoridor: JS game engine/MCTS, PyTorch training, ONNX inference server",
+  "description": "Game-agnostic AlphaZero-style MCTS platform (games/<id> plugins): JS MCTS, PyTorch training, ONNX inference",
   "scripts": {
     "selfplay": "node ai_trainer/selfplay.js",
     "arena": "node ai_trainer/arena.js",
