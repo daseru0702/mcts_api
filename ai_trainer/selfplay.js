@@ -7,10 +7,16 @@
 //
 // --game 은 games/ 에 게임이 하나뿐이면 생략할 수 있습니다.
 // --model 을 생략하면 게임의 휴리스틱 평가기로 0세대 데이터를 만듭니다.
-// 출력은 float32 행의 연속:  [state(C*H*W) | pi(policySize) | z(1) | q(1)]
-//   z = 최종 승패 (둘 차례 기준), q = 그 국면의 MCTS 평가값 (둘 차례 기준)
+// 출력 형식 "sparse-u8-v1" — 정책이 큰 게임도 작게 저장하도록 방문한 수만 저장합니다.
+//   한 파일 안에 다섯 구역이 차례로 있고, 각 구역은 4바이트 단위로 맞춥니다.
+//     states  uint8   [rows, C*H*W]   encode() 값 × 255 (encode 는 0~1 사이 값이어야 함)
+//     zq      float32 [rows, 2]       z = 최종 승패, q = 그 국면의 MCTS 평가값 (둘 다 둘 차례 기준)
+//     counts  int32   [rows]          행마다 방문한 수의 개수
+//     idx     int32   [nnz]           정책 인덱스
+//     val     float32 [nnz]           방문 비율
 // 모든 포지션은 게임이 정한 대칭 변환(Adapter.SYMMETRIES)마다 하나씩 저장됩니다.
-// 옆에 같은 이름의 .json 으로 크기 정보(stateShape, policySize)를 남기며, train.py 가 이를 읽습니다.
+// 옆에 같은 이름의 .json 으로 형식과 크기 정보(stateShape, policySize, rows, nnz)를 남기며, train.py 가 이를 읽습니다.
+// (예전 형식: float32 행 [state | pi | z | q] 의 연속, .json 에 format 이 없음 — train.py 는 둘 다 읽습니다)
 
 import fs from "fs";
 import os from "os";
@@ -20,16 +26,16 @@ import { fileURLToPath } from "url";
 import { loadGame } from "../common/games.js";
 import { resolveGameId } from "../common/game_registry.js";
 import { MCTS } from "../common/mcts.js";
-import { HeuristicEvaluator, OnnxEvaluator } from "../common/evaluators.js";
+// onnxruntime-node 는 모델을 쓸 때만 불러옵니다 (휴리스틱 작업 스레드에 네이티브 모듈을 올리지 않음)
+import { HeuristicEvaluator } from "../common/heuristic_evaluator.js";
 import { parseArgs } from "./players.js";
 
-function rowLayout(game) {
-  const stateSize = game.inputShape.reduce((a, b) => a * b, 1);
-  return { stateSize, row: stateSize + game.policySize + 2 };
-}
+export const FORMAT = "sparse-u8-v1";
+const SECTIONS = ["states", "zq", "counts", "idx", "val"];
+const pad4 = n => (n + 3) & ~3;
+const stateSizeOf = game => game.inputShape.reduce((a, b) => a * b, 1);
 
 async function playGame(game, mcts, opts) {
-  const { stateSize, row } = rowLayout(game);
   const state = new game.Adapter();
   const records = [];
 
@@ -41,9 +47,9 @@ async function playGame(game, mcts, opts) {
     const q = nSum > 0 ? root.W.reduce((a, b) => a + b, 0) / nSum : root.value;
 
     for (const sym of game.symmetries) {
-      const piDense = new Float32Array(game.policySize);
-      root.moves.forEach((m, a) => { piDense[state.moveToIndex(m, sym)] = pi[a]; });
-      records.push({ s: state.encode(sym), pi: piDense, q, player: state.getCurrentPlayer() });
+      const idx = [], val = [];
+      root.moves.forEach((m, a) => { if (pi[a] > 0) { idx.push(state.moveToIndex(m, sym)); val.push(pi[a]); } });
+      records.push({ s: state.encode(sym), idx, val, q, player: state.getCurrentPlayer() });
     }
 
     const temperature = state.getMoveCount() < opts.tempMoves ? 1 : 0;
@@ -62,25 +68,48 @@ async function playGame(game, mcts, opts) {
     zP1 = state.getCurrentPlayer() === 1 ? v : -v;
   }
 
-  const buf = new Float32Array(records.length * row);
+  // 구역별 버퍼 (메인 스레드가 구역 파일에 이어 붙임)
+  const stateSize = stateSizeOf(game), rows = records.length;
+  const nnz = records.reduce((a, r) => a + r.idx.length, 0);
+  const out = {
+    states: new Uint8Array(rows * stateSize),
+    zq: new Float32Array(rows * 2),
+    counts: new Int32Array(rows),
+    idx: new Int32Array(nnz),
+    val: new Float32Array(nnz),
+  };
+  let k = 0;
   records.forEach((r, i) => {
-    buf.set(r.s, i * row);
-    buf.set(r.pi, i * row + stateSize);
-    buf[i * row + row - 2] = r.player === 1 ? zP1 : -zP1;
-    buf[i * row + row - 1] = r.q;
+    for (let j = 0; j < stateSize; j++) {
+      const v = r.s[j];
+      out.states[i * stateSize + j] = v <= 0 ? 0 : v >= 1 ? 255 : Math.round(v * 255);
+    }
+    out.zq[2 * i] = r.player === 1 ? zP1 : -zP1;
+    out.zq[2 * i + 1] = r.q;
+    out.counts[i] = r.idx.length;
+    out.idx.set(r.idx, k);
+    out.val.set(r.val, k);
+    k += r.idx.length;
   });
-  return { buf, moves: state.getMoveCount(), winner };
+  return { out, rows, nnz, moves: state.getMoveCount(), winner };
 }
 
 async function workerMain() {
   const { gameId, model, sims, games, maxMoves, tempMoves } = workerData;
   const game = await loadGame(gameId);
-  const evaluator = model ? await OnnxEvaluator.create(model) : new HeuristicEvaluator();
-  const mcts = new MCTS(evaluator, { simulations: sims, maxMoves });
+  const evaluator = model
+    ? await (await import("../common/evaluators.js")).OnnxEvaluator.create(model)
+    : new HeuristicEvaluator();
+  const mcts = new MCTS(evaluator, { ...game.mcts, simulations: sims, maxMoves });
   for (let i = 0; i < games; i++) {
-    const { buf, moves, winner } = await playGame(game, mcts, { maxMoves, tempMoves });
-    parentPort.postMessage({ buf, moves, winner }, [buf.buffer]);
+    const res = await playGame(game, mcts, { maxMoves, tempMoves });
+    // 버퍼를 넘기지(transfer) 않고 복사해서 보냅니다 — 넘긴 채로 스레드가 끝나면 Node 18 이 죽는 경우가 있었음
+    parentPort.postMessage(res);
   }
+  // 메인 스레드가 모든 메시지를 받았다고 알려줄 때까지 기다렸다가 끝냅니다
+  const bye = new Promise(resolve => parentPort.once("message", resolve));
+  parentPort.postMessage({ done: true });
+  await bye;
 }
 
 async function main() {
@@ -94,15 +123,16 @@ async function main() {
   const maxMoves = parseInt(args["max-moves"] ?? game.selfplay.maxMoves ?? 200, 10);
   const tempMoves = parseInt(args["temp-moves"] ?? game.selfplay.tempMoves ?? 10, 10);
   const model    = args.model ? path.resolve(args.model) : null;
-  const { stateSize, row } = rowLayout(game);
+  const stateSize = stateSizeOf(game);
 
   await fs.promises.mkdir(path.dirname(path.resolve(out)), { recursive: true });
-  const tmpPath = out + ".part";
-  const fd = fs.openSync(tmpPath, "w");
+  // 구역마다 임시 파일에 쌓았다가 마지막에 하나로 합칩니다
+  const parts = Object.fromEntries(SECTIONS.map(name => [name, `${out}.${name}.part`]));
+  const fds = Object.fromEntries(SECTIONS.map(name => [name, fs.openSync(parts[name], "w")]));
 
   console.log(`🔄 self-play [${gameId}]: ${games}판, sims=${sims}, workers=${workers}, 평가기=${model ?? "heuristic"}`);
   const t0 = Date.now();
-  let done = 0, rows = 0, totalMoves = 0;
+  let done = 0, rows = 0, nnz = 0, totalMoves = 0;
   const wins = { 0: 0, 1: 0, 2: 0 };
 
   const self = fileURLToPath(import.meta.url);
@@ -110,10 +140,13 @@ async function main() {
     const share = Math.floor(games / workers) + (w < games % workers ? 1 : 0);
     return new Promise((resolve, reject) => {
       const worker = new Worker(self, { workerData: { gameId, model, sims, games: share, maxMoves, tempMoves } });
-      worker.on("message", ({ buf, moves, winner }) => {
-        fs.writeSync(fd, Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength));
+      worker.on("message", msg => {
+        if (msg.done) { worker.postMessage("bye"); return; }
+        const { out: o, rows: r, nnz: z, moves, winner } = msg;
+        for (const name of SECTIONS) fs.writeSync(fds[name], Buffer.from(o[name].buffer, o[name].byteOffset, o[name].byteLength));
         done++;
-        rows += buf.length / row;
+        rows += r;
+        nnz += z;
         totalMoves += moves;
         wins[winner]++;
         if (done % 10 === 0 || done === games) {
@@ -127,17 +160,39 @@ async function main() {
     });
   }));
 
+  const tmpPath = out + ".part";
+  const fd = fs.openSync(tmpPath, "w");
+  const offsets = {};
+  let pos = 0;
+  for (const name of SECTIONS) {
+    fs.closeSync(fds[name]);
+    offsets[name] = pos;
+    // 2GB 를 넘을 수 있으므로 나눠서 복사
+    const src = fs.openSync(parts[name], "r");
+    const chunk = Buffer.allocUnsafe(64 << 20);
+    for (let n; (n = fs.readSync(src, chunk, 0, chunk.length, null)) > 0;) {
+      fs.writeSync(fd, chunk, 0, n);
+      pos += n;
+    }
+    fs.closeSync(src);
+    const pad = pad4(pos) - pos;
+    if (pad) { fs.writeSync(fd, Buffer.alloc(pad)); pos += pad; }
+    fs.unlinkSync(parts[name]);
+  }
   fs.closeSync(fd);
   fs.renameSync(tmpPath, out);
-  const meta = { game: gameId, games, sims, model, rows, rowFloats: row, stateShape: game.inputShape,
-                 stateSize, policySize: game.policySize, avgMoves: totalMoves / games, wins,
+  const meta = { format: FORMAT, game: gameId, games, sims, model, rows, nnz, offsets,
+                 stateShape: game.inputShape, stateSize, policySize: game.policySize,
+                 policyPlanes: game.policyPlanes, avgMoves: totalMoves / games, wins,
                  seconds: (Date.now() - t0) / 1000 };
   fs.writeFileSync(out.replace(/\.bin$/, ".json"), JSON.stringify(meta, null, 2));
   console.log(`✅ ${rows}개 샘플 저장: ${out} (${meta.seconds.toFixed(0)}초)`);
 }
 
+// 오류는 동기로 바로 써야 파이프(파이프라인 로그)에서 사라지지 않습니다
+const die = e => { fs.writeSync(2, `❌ selfplay 오류: ${e?.stack ?? e}\n`); process.exit(1); };
 if (isMainThread) {
-  main().catch(e => { console.error(e); process.exit(1); });
+  main().catch(die);
 } else {
-  workerMain().catch(e => { console.error(e); process.exit(1); });
+  workerMain().catch(die);
 }

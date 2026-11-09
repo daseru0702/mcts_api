@@ -46,7 +46,18 @@ def resolve_game(arg):
     raise SystemExit(f"--game <이름> 을 지정하세요. 가능한 게임: {', '.join(ids)}")
 
 
-def run(cmd):
+def run(cmd, retries=0):
+    """명령 실행. retries 만큼 다시 시도합니다 (Node 작업 스레드가 가끔 메시지 없이 죽는 경우 대비)."""
+    for attempt in range(retries + 1):
+        try:
+            return _run_once(cmd)
+        except SystemExit as e:
+            if attempt == retries:
+                raise
+            print(f"↻ 다시 시도 ({attempt + 1}/{retries}): {e}", flush=True)
+
+
+def _run_once(cmd):
     print("▶", " ".join(cmd), flush=True)
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, encoding="utf-8", errors="replace")
@@ -86,7 +97,7 @@ def model_base(i):
 
 
 def arena(a, b, games):
-    out = run([NODE, "ai_trainer/arena.js", f"--game={GAME}", f"--a={a}", f"--b={b}", f"--games={games}"])
+    out = run([NODE, "ai_trainer/arena.js", f"--game={GAME}", f"--a={a}", f"--b={b}", f"--games={games}"], retries=2)
     return json.loads(out)
 
 
@@ -133,7 +144,7 @@ def main():
                 cmd.append(f"--games={args.games0}")
             else:
                 cmd += [f"--games={args.games}", f"--model={BEST}"]
-            run(cmd)
+            run(cmd, retries=2)
         with open(data_file(src).replace(".bin", ".json"), encoding="utf-8") as f:
             sp_meta = json.load(f)
 

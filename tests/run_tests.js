@@ -42,13 +42,15 @@ async function contractTests(game) {
   const stateSize = game.inputShape.reduce((a, b) => a * b, 1);
   const maxMoves = game.selfplay.maxMoves ?? 200;
 
-  await test("encode() 길이 = INPUT_SHAPE, 정책 인덱스는 고유하고 범위 안", () => {
+  await test("encode() 길이 = INPUT_SHAPE·값 0~1, 정책 인덱스는 고유하고 범위 안", () => {
     for (let t = 0; t < 10; t++) {
       for (const s of randomPlayout(game, maxMoves).states) {
         const moves = s.getPossibleMoves();
         assert.ok(moves.length > 0, "끝나지 않은 상태에는 합법 수가 있어야 함");
         for (const sym of game.symmetries) {
-          assert.equal(s.encode(sym).length, stateSize);
+          const e = s.encode(sym);
+          assert.equal(e.length, stateSize);
+          assert.ok(e.every(v => v >= 0 && v <= 1), "encode() 값은 0~1 (학습 데이터에 1바이트로 저장)");
           const idx = moves.map(m => s.moveToIndex(m, sym));
           assert.equal(new Set(idx).size, idx.length, "같은 상태의 서로 다른 수가 같은 인덱스");
           assert.ok(idx.every(i => Number.isInteger(i) && i >= 0 && i < game.policySize));
@@ -70,11 +72,11 @@ async function contractTests(game) {
     }
   });
 
-  await test("끝난 상태의 getWinner() 는 1 또는 2, 진행 중은 0", () => {
+  await test("진행 중 getWinner() 는 0, 끝난 상태는 0(무승부)·1·2", () => {
     for (let t = 0; t < 10; t++) {
       const { states, final } = randomPlayout(game, maxMoves * 5);
       assert.ok(states.every(s => s.getWinner() === 0));
-      if (final.isTerminal()) assert.ok([1, 2].includes(final.getWinner()));
+      if (final.isTerminal()) assert.ok([0, 1, 2].includes(final.getWinner()));
     }
   });
 

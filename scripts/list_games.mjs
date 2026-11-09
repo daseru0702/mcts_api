@@ -5,6 +5,9 @@ import { listGameIds } from "../common/game_registry.js";
 const list = [];
 for (const id of listGameIds()) {
   const g = await loadGame(id);
-  list.push({ id, name: g.name ?? id, title: g.title ?? id });
+  if (!g.viewUrl) continue; // 화면(view.js)이 아직 없는 게임은 웹 목록에서 제외
+  list.push({ id, name: g.name ?? id, title: g.title ?? id, order: g.order ?? 99 });
 }
+// 첫 게임이 기본 화면입니다 (manifest 의 order 가 작은 순)
+list.sort((a, b) => a.order - b.order);
 console.log(JSON.stringify(list, null, 2));

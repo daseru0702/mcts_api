@@ -42,7 +42,7 @@ onmessage = async ({ data: { id, game: gameId, state, level, type } }) => {
     const { game, evaluator } = await prepare(gameId);
     const cfg = LEVELS[level] ?? LEVELS.normal;
     const t0 = performance.now();
-    const mcts = new MCTS(evaluator, { simulations: cfg.simulations });
+    const mcts = new MCTS(evaluator, { ...game.mcts, simulations: cfg.simulations });
     const root = await mcts.search(new game.Adapter(state));
     const move = root.moves[mcts.pickMoveIndex(root, cfg.temperature)];
     postMessage({ id, move, stats: mcts.stats(root, 6), ms: Math.round(performance.now() - t0) });

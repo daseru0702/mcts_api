@@ -10,4 +10,8 @@ models/*
 models/quoridor/*
 !models/quoridor/best.onnx
 !models/quoridor/history.json
+!models/blokus/
+models/blokus/*
+!models/blokus/best.onnx
+!models/blokus/history.json
 _site

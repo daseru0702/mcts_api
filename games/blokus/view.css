@@ -1,0 +1,48 @@
+/* games/blokus/view.css — 블로커스 보드·조각 상자 스타일 (색은 client/style.css 의 토큰 사용) */
+
+/* 조각 상자 자리만큼 보드를 줄여 한 화면에 들어오게 */
+.bk-has-tray .board-frame { width: min(100%, calc(100vh - 330px)); }
+
+.bk-cell { fill: var(--cell); transition: fill .2s; }
+.bk-cell.bk-human { fill: var(--human); }
+.bk-cell.bk-ai { fill: var(--ai); }
+.bk-start { fill: none; stroke-width: 1.2; }
+.bk-start-human { stroke: var(--human); }
+.bk-start-ai { stroke: var(--ai); }
+.bk-corner { fill: var(--legal); opacity: .85; pointer-events: none; }
+
+.bk-last rect { fill: none; stroke: #fff; stroke-width: .7; pointer-events: none; }
+.bk-ghost rect { pointer-events: none; }
+.bk-ghost.ok rect { fill: var(--human); opacity: .6; stroke: #fff; stroke-width: .5; }
+.bk-ghost.bad rect { fill: #d64545; opacity: .4; }
+
+.bk-cand { pointer-events: none; }
+.bk-cand rect { fill: var(--ai); opacity: .28; stroke: var(--ai); stroke-width: .6; stroke-dasharray: 1.4 1; }
+.bk-cand-best rect { opacity: .45; }
+.bk-cand-label { fill: #fff; font: 700 3.6px "JetBrains Mono", monospace; text-anchor: middle; paint-order: stroke; stroke: var(--board); stroke-width: .9; }
+
+.bk-tray { width: min(100%, 640px); display: flex; flex-direction: column; gap: 8px; }
+.bk-pieces { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 4px; }
+.bk-piece {
+  aspect-ratio: 1; padding: 3px; border-radius: 8px; min-width: 0;
+  border: 1.5px solid var(--line); background: var(--surface);
+}
+.bk-piece svg { width: 100%; height: 100%; display: block; }
+.bk-piece svg rect { fill: var(--human); }
+.bk-tray[data-color="ai"] .bk-piece svg rect { fill: var(--ai); }
+.bk-piece.on { border-color: var(--human); background: var(--human-soft); }
+.bk-piece.stuck svg rect { opacity: .35; }
+.bk-piece.used { visibility: hidden; }
+.bk-tray.waiting .bk-piece { opacity: .55; }
+.bk-tools { display: flex; gap: 8px; justify-content: center; }
+.bk-tools button { padding: 6px 14px; font-size: 14px; }
+.bk-pass { background: var(--human); color: #fff; border-color: transparent; font-weight: 700; }
+
+.bk-info { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.bk-info b { color: var(--text); }
+.bk-passed { color: var(--wall); font-weight: 700; }
+
+@media (max-width: 960px) {
+  .bk-has-tray .board-frame { width: 100%; }
+  .bk-pieces { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
