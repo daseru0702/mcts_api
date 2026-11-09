@@ -1,0 +1,1196 @@
+{
+  "best": "models\\blokus\\gen_025",
+  "bestAnchor": 0.975,
+  "generations": [
+    {
+      "gen": 1,
+      "selfplay": {
+        "games": 3000,
+        "rows": 205614,
+        "avgMoves": 34.269,
+        "wins": {
+          "0": 138,
+          "1": 1611,
+          "2": 1251
+        },
+        "seconds": 421.157
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_001.pt",
+        "onnx": "models\\blokus\\gen_001.onnx",
+        "rows": 205614,
+        "valPolicy": 3.4898815585481517,
+        "valValue": 0.20581399346140108,
+        "valValueVsZ": 0.660468218020428
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_001.onnx:200",
+        "b": "heur:200",
+        "aWins": 35,
+        "bWins": 3,
+        "draws": 2,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 16,
+        "aScore": 0.9
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_001",
+      "bestVsHeuristic": {
+        "aScore": 0.9
+      },
+      "seconds": 90
+    },
+    {
+      "gen": 2,
+      "selfplay": {
+        "games": 400,
+        "rows": 27546,
+        "avgMoves": 34.4325,
+        "wins": {
+          "0": 16,
+          "1": 206,
+          "2": 178
+        },
+        "seconds": 526.546
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_002.pt",
+        "onnx": "models\\blokus\\gen_002.onnx",
+        "rows": 233160,
+        "valPolicy": 3.333350840758492,
+        "valValue": 0.23592736516937135,
+        "valValueVsZ": 0.694854731092651
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_002.onnx:200",
+        "b": "heur:200",
+        "aWins": 34,
+        "bWins": 5,
+        "draws": 1,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 14,
+        "aScore": 0.8625
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_002.onnx:200",
+        "b": "nn:models\\blokus\\gen_001.onnx:200",
+        "aWins": 21,
+        "bWins": 15,
+        "draws": 4,
+        "aWinsAsP1": 9,
+        "aWinsAsP2": 12,
+        "aScore": 0.575
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_002",
+      "bestVsHeuristic": {
+        "aScore": 0.8625
+      },
+      "seconds": 677
+    },
+    {
+      "gen": 3,
+      "selfplay": {
+        "games": 400,
+        "rows": 27702,
+        "avgMoves": 34.6275,
+        "wins": {
+          "0": 21,
+          "1": 233,
+          "2": 146
+        },
+        "seconds": 514.02
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_003.pt",
+        "onnx": "models\\blokus\\gen_003.onnx",
+        "rows": 260862,
+        "valPolicy": 3.2303267542335927,
+        "valValue": 0.22408262330458628,
+        "valValueVsZ": 0.6329888996971555
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_003.onnx:200",
+        "b": "heur:200",
+        "aWins": 32,
+        "bWins": 8,
+        "draws": 0,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 14,
+        "aScore": 0.8
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_003.onnx:200",
+        "b": "nn:models\\blokus\\gen_002.onnx:200",
+        "aWins": 19,
+        "bWins": 19,
+        "draws": 2,
+        "aWinsAsP1": 15,
+        "aWinsAsP2": 4,
+        "aScore": 0.5
+      },
+      "promoted": false,
+      "best": "models\\blokus\\gen_002",
+      "bestVsHeuristic": {
+        "aScore": 0.8625
+      },
+      "seconds": 663
+    },
+    {
+      "gen": 4,
+      "selfplay": {
+        "games": 400,
+        "rows": 27608,
+        "avgMoves": 34.51,
+        "wins": {
+          "0": 20,
+          "1": 221,
+          "2": 159
+        },
+        "seconds": 513.069
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_004.pt",
+        "onnx": "models\\blokus\\gen_004.onnx",
+        "rows": 288470,
+        "valPolicy": 3.198193978909554,
+        "valValue": 0.22112571612100682,
+        "valValueVsZ": 0.6134808721584015
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_004.onnx:200",
+        "b": "heur:200",
+        "aWins": 30,
+        "bWins": 8,
+        "draws": 2,
+        "aWinsAsP1": 16,
+        "aWinsAsP2": 14,
+        "aScore": 0.775
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_004.onnx:200",
+        "b": "nn:models\\blokus\\gen_002.onnx:200",
+        "aWins": 18,
+        "bWins": 19,
+        "draws": 3,
+        "aWinsAsP1": 9,
+        "aWinsAsP2": 9,
+        "aScore": 0.4875
+      },
+      "promoted": false,
+      "best": "models\\blokus\\gen_002",
+      "bestVsHeuristic": {
+        "aScore": 0.8625
+      },
+      "seconds": 666
+    },
+    {
+      "gen": 5,
+      "selfplay": {
+        "games": 400,
+        "rows": 27524,
+        "avgMoves": 34.405,
+        "wins": {
+          "0": 25,
+          "1": 226,
+          "2": 149
+        },
+        "seconds": 506.34
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_005.pt",
+        "onnx": "models\\blokus\\gen_005.onnx",
+        "rows": 315994,
+        "valPolicy": 3.166795008287708,
+        "valValue": 0.23559179740039915,
+        "valValueVsZ": 0.6365039235572663
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_005.onnx:200",
+        "b": "heur:200",
+        "aWins": 28,
+        "bWins": 11,
+        "draws": 1,
+        "aWinsAsP1": 17,
+        "aWinsAsP2": 11,
+        "aScore": 0.7125
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_005.onnx:200",
+        "b": "nn:models\\blokus\\gen_002.onnx:200",
+        "aWins": 20,
+        "bWins": 18,
+        "draws": 2,
+        "aWinsAsP1": 12,
+        "aWinsAsP2": 8,
+        "aScore": 0.525
+      },
+      "promoted": false,
+      "best": "models\\blokus\\gen_002",
+      "bestVsHeuristic": {
+        "aScore": 0.8625
+      },
+      "seconds": 671
+    },
+    {
+      "gen": 6,
+      "selfplay": {
+        "games": 400,
+        "rows": 27626,
+        "avgMoves": 34.5325,
+        "wins": {
+          "0": 15,
+          "1": 224,
+          "2": 161
+        },
+        "seconds": 508.253
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_006.pt",
+        "onnx": "models\\blokus\\gen_006.onnx",
+        "rows": 138006,
+        "valPolicy": 3.076873584692029,
+        "valValue": 0.25931279721467393,
+        "valValueVsZ": 0.6970069597769475
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_006.onnx:200",
+        "b": "heur:200",
+        "aWins": 34,
+        "bWins": 5,
+        "draws": 1,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 15,
+        "aScore": 0.8625
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_006.onnx:200",
+        "b": "nn:models\\blokus\\gen_002.onnx:200",
+        "aWins": 28,
+        "bWins": 10,
+        "draws": 2,
+        "aWinsAsP1": 16,
+        "aWinsAsP2": 12,
+        "aScore": 0.725
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_006",
+      "bestVsHeuristic": {
+        "aScore": 0.8625
+      },
+      "seconds": 645
+    },
+    {
+      "gen": 7,
+      "selfplay": {
+        "games": 400,
+        "rows": 27654,
+        "avgMoves": 34.5675,
+        "wins": {
+          "0": 20,
+          "1": 232,
+          "2": 148
+        },
+        "seconds": 488.652
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_007.pt",
+        "onnx": "models\\blokus\\gen_007.onnx",
+        "rows": 138114,
+        "valPolicy": 3.017412371017379,
+        "valValue": 0.2356883563484341,
+        "valValueVsZ": 0.5970125390342144
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_007.onnx:200",
+        "b": "heur:200",
+        "aWins": 34,
+        "bWins": 5,
+        "draws": 1,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 15,
+        "aScore": 0.8625
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_007.onnx:200",
+        "b": "nn:models\\blokus\\gen_006.onnx:200",
+        "aWins": 24,
+        "bWins": 13,
+        "draws": 3,
+        "aWinsAsP1": 14,
+        "aWinsAsP2": 10,
+        "aScore": 0.6375
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_007",
+      "bestVsHeuristic": {
+        "aScore": 0.8625
+      },
+      "seconds": 629
+    },
+    {
+      "gen": 8,
+      "selfplay": {
+        "games": 400,
+        "rows": 27696,
+        "avgMoves": 34.62,
+        "wins": {
+          "0": 26,
+          "1": 225,
+          "2": 149
+        },
+        "seconds": 478.346
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_008.pt",
+        "onnx": "models\\blokus\\gen_008.onnx",
+        "rows": 138108,
+        "valPolicy": 2.92070765070601,
+        "valValue": 0.2720986688767198,
+        "valValueVsZ": 0.6764759635510952
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_008.onnx:200",
+        "b": "heur:200",
+        "aWins": 32,
+        "bWins": 7,
+        "draws": 1,
+        "aWinsAsP1": 15,
+        "aWinsAsP2": 17,
+        "aScore": 0.8125
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_008.onnx:200",
+        "b": "nn:models\\blokus\\gen_007.onnx:200",
+        "aWins": 20,
+        "bWins": 16,
+        "draws": 4,
+        "aWinsAsP1": 11,
+        "aWinsAsP2": 9,
+        "aScore": 0.55
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_008",
+      "bestVsHeuristic": {
+        "aScore": 0.8125
+      },
+      "seconds": 615
+    },
+    {
+      "gen": 9,
+      "selfplay": {
+        "games": 400,
+        "rows": 27826,
+        "avgMoves": 34.7825,
+        "wins": {
+          "0": 24,
+          "1": 218,
+          "2": 158
+        },
+        "seconds": 474.48
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_009.pt",
+        "onnx": "models\\blokus\\gen_009.onnx",
+        "rows": 138326,
+        "valPolicy": 2.8850533974660206,
+        "valValue": 0.28229287513216633,
+        "valValueVsZ": 0.7299064958350654
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_009.onnx:200",
+        "b": "heur:200",
+        "aWins": 35,
+        "bWins": 4,
+        "draws": 1,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 15,
+        "aScore": 0.8875
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_009.onnx:200",
+        "b": "nn:models\\blokus\\gen_008.onnx:200",
+        "aWins": 25,
+        "bWins": 12,
+        "draws": 3,
+        "aWinsAsP1": 15,
+        "aWinsAsP2": 10,
+        "aScore": 0.6625
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_009",
+      "bestVsHeuristic": {
+        "aScore": 0.8875
+      },
+      "seconds": 613
+    },
+    {
+      "gen": 10,
+      "selfplay": {
+        "games": 400,
+        "rows": 27908,
+        "avgMoves": 34.885,
+        "wins": {
+          "0": 21,
+          "1": 232,
+          "2": 147
+        },
+        "seconds": 479.655
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_010.pt",
+        "onnx": "models\\blokus\\gen_010.onnx",
+        "rows": 138710,
+        "valPolicy": 2.8533272125090123,
+        "valValue": 0.281234422173531,
+        "valValueVsZ": 0.690560770069169
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_010.onnx:200",
+        "b": "heur:200",
+        "aWins": 37,
+        "bWins": 3,
+        "draws": 0,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 18,
+        "aScore": 0.925
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_010.onnx:200",
+        "b": "nn:models\\blokus\\gen_009.onnx:200",
+        "aWins": 22,
+        "bWins": 15,
+        "draws": 3,
+        "aWinsAsP1": 16,
+        "aWinsAsP2": 6,
+        "aScore": 0.5875
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_010",
+      "bestVsHeuristic": {
+        "aScore": 0.925
+      },
+      "seconds": 617
+    },
+    {
+      "gen": 11,
+      "selfplay": {
+        "games": 400,
+        "rows": 27754,
+        "avgMoves": 34.6925,
+        "wins": {
+          "0": 18,
+          "1": 241,
+          "2": 141
+        },
+        "seconds": 485.542
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_011.pt",
+        "onnx": "models\\blokus\\gen_011.onnx",
+        "rows": 138838,
+        "valPolicy": 2.8394696425677135,
+        "valValue": 0.3129032840132456,
+        "valValueVsZ": 0.7567258438310402
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_011.onnx:200",
+        "b": "heur:200",
+        "aWins": 39,
+        "bWins": 1,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 19,
+        "aScore": 0.975
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_011.onnx:200",
+        "b": "nn:models\\blokus\\gen_010.onnx:200",
+        "aWins": 19,
+        "bWins": 19,
+        "draws": 2,
+        "aWinsAsP1": 13,
+        "aWinsAsP2": 6,
+        "aScore": 0.5
+      },
+      "promoted": false,
+      "best": "models\\blokus\\gen_010",
+      "bestVsHeuristic": {
+        "aScore": 0.925
+      },
+      "seconds": 624
+    },
+    {
+      "gen": 12,
+      "selfplay": {
+        "games": 400,
+        "rows": 27988,
+        "avgMoves": 34.985,
+        "wins": {
+          "0": 23,
+          "1": 232,
+          "2": 145
+        },
+        "seconds": 481.456
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_012.pt",
+        "onnx": "models\\blokus\\gen_012.onnx",
+        "rows": 139172,
+        "valPolicy": 2.8360645878619932,
+        "valValue": 0.2612361178791499,
+        "valValueVsZ": 0.6430727220465651
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_012.onnx:200",
+        "b": "heur:200",
+        "aWins": 37,
+        "bWins": 2,
+        "draws": 1,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 17,
+        "aScore": 0.9375
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_012.onnx:200",
+        "b": "nn:models\\blokus\\gen_010.onnx:200",
+        "aWins": 24,
+        "bWins": 15,
+        "draws": 1,
+        "aWinsAsP1": 13,
+        "aWinsAsP2": 11,
+        "aScore": 0.6125
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_012",
+      "bestVsHeuristic": {
+        "aScore": 0.9375
+      },
+      "seconds": 621
+    },
+    {
+      "gen": 13,
+      "selfplay": {
+        "games": 400,
+        "rows": 27964,
+        "avgMoves": 34.955,
+        "wins": {
+          "0": 26,
+          "1": 230,
+          "2": 144
+        },
+        "seconds": 482.937
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_013.pt",
+        "onnx": "models\\blokus\\gen_013.onnx",
+        "rows": 139440,
+        "valPolicy": 2.808662523979848,
+        "valValue": 0.3346229767703627,
+        "valValueVsZ": 0.8101337758959947
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_013.onnx:200",
+        "b": "heur:200",
+        "aWins": 38,
+        "bWins": 1,
+        "draws": 1,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 19,
+        "aScore": 0.9625
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_013.onnx:200",
+        "b": "nn:models\\blokus\\gen_012.onnx:200",
+        "aWins": 13,
+        "bWins": 26,
+        "draws": 1,
+        "aWinsAsP1": 8,
+        "aWinsAsP2": 5,
+        "aScore": 0.3375
+      },
+      "promoted": false,
+      "best": "models\\blokus\\gen_012",
+      "bestVsHeuristic": {
+        "aScore": 0.9375
+      },
+      "seconds": 623
+    },
+    {
+      "gen": 14,
+      "selfplay": {
+        "games": 400,
+        "rows": 27934,
+        "avgMoves": 34.9175,
+        "wins": {
+          "0": 29,
+          "1": 239,
+          "2": 132
+        },
+        "seconds": 478.835
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_014.pt",
+        "onnx": "models\\blokus\\gen_014.onnx",
+        "rows": 139548,
+        "valPolicy": 2.7683068027089006,
+        "valValue": 0.3066052653752956,
+        "valValueVsZ": 0.7438991787749033
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_014.onnx:200",
+        "b": "heur:200",
+        "aWins": 33,
+        "bWins": 6,
+        "draws": 1,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 15,
+        "aScore": 0.8375
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_014.onnx:200",
+        "b": "nn:models\\blokus\\gen_012.onnx:200",
+        "aWins": 22,
+        "bWins": 16,
+        "draws": 2,
+        "aWinsAsP1": 16,
+        "aWinsAsP2": 6,
+        "aScore": 0.575
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_014",
+      "bestVsHeuristic": {
+        "aScore": 0.8375
+      },
+      "seconds": 618
+    },
+    {
+      "gen": 15,
+      "selfplay": {
+        "games": 400,
+        "rows": 28042,
+        "avgMoves": 35.0525,
+        "wins": {
+          "0": 22,
+          "1": 241,
+          "2": 137
+        },
+        "seconds": 471.884
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_015.pt",
+        "onnx": "models\\blokus\\gen_015.onnx",
+        "rows": 139682,
+        "valPolicy": 2.7833184835427405,
+        "valValue": 0.26983831346649484,
+        "valValueVsZ": 0.6665004105365836
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_015.onnx:200",
+        "b": "heur:200",
+        "aWins": 38,
+        "bWins": 2,
+        "draws": 0,
+        "aWinsAsP1": 19,
+        "aWinsAsP2": 19,
+        "aScore": 0.95
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_015.onnx:200",
+        "b": "nn:models\\blokus\\gen_014.onnx:200",
+        "aWins": 24,
+        "bWins": 14,
+        "draws": 2,
+        "aWinsAsP1": 14,
+        "aWinsAsP2": 10,
+        "aScore": 0.625
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_015",
+      "bestVsHeuristic": {
+        "aScore": 0.95
+      },
+      "seconds": 612
+    },
+    {
+      "gen": 16,
+      "selfplay": {
+        "games": 400,
+        "rows": 27874,
+        "avgMoves": 34.8425,
+        "wins": {
+          "0": 27,
+          "1": 227,
+          "2": 146
+        },
+        "seconds": 472.201
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_016.pt",
+        "onnx": "models\\blokus\\gen_016.onnx",
+        "rows": 139802,
+        "valPolicy": 2.7410124117042205,
+        "valValue": 0.27985727203762073,
+        "valValueVsZ": 0.6760728216648784
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_016.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_016.onnx:200",
+        "b": "nn:models\\blokus\\gen_015.onnx:200",
+        "aWins": 23,
+        "bWins": 16,
+        "draws": 1,
+        "aWinsAsP1": 16,
+        "aWinsAsP2": 7,
+        "aScore": 0.5875
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_016",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 610
+    },
+    {
+      "gen": 17,
+      "selfplay": {
+        "games": 400,
+        "rows": 27870,
+        "avgMoves": 34.8375,
+        "wins": {
+          "0": 23,
+          "1": 255,
+          "2": 122
+        },
+        "seconds": 462.689
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_017.pt",
+        "onnx": "models\\blokus\\gen_017.onnx",
+        "rows": 139684,
+        "valPolicy": 2.7316477842210767,
+        "valValue": 0.2388433257602198,
+        "valValueVsZ": 0.5608570496514355
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_017.onnx:200",
+        "b": "heur:200",
+        "aWins": 37,
+        "bWins": 3,
+        "draws": 0,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 19,
+        "aScore": 0.925
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_017.onnx:200",
+        "b": "nn:models\\blokus\\gen_016.onnx:200",
+        "aWins": 20,
+        "bWins": 18,
+        "draws": 2,
+        "aWinsAsP1": 12,
+        "aWinsAsP2": 8,
+        "aScore": 0.525
+      },
+      "promoted": false,
+      "best": "models\\blokus\\gen_016",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 600
+    },
+    {
+      "gen": 18,
+      "selfplay": {
+        "games": 400,
+        "rows": 27906,
+        "avgMoves": 34.8825,
+        "wins": {
+          "0": 26,
+          "1": 241,
+          "2": 133
+        },
+        "seconds": 470.295
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_018.pt",
+        "onnx": "models\\blokus\\gen_018.onnx",
+        "rows": 139626,
+        "valPolicy": 2.7637395810951153,
+        "valValue": 0.24609192270481933,
+        "valValueVsZ": 0.6064666105433498
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_018.onnx:200",
+        "b": "heur:200",
+        "aWins": 39,
+        "bWins": 1,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 19,
+        "aScore": 0.975
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_018.onnx:200",
+        "b": "nn:models\\blokus\\gen_016.onnx:200",
+        "aWins": 22,
+        "bWins": 17,
+        "draws": 1,
+        "aWinsAsP1": 13,
+        "aWinsAsP2": 9,
+        "aScore": 0.5625
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_018",
+      "bestVsHeuristic": {
+        "aScore": 0.975
+      },
+      "seconds": 608
+    },
+    {
+      "gen": 19,
+      "selfplay": {
+        "games": 400,
+        "rows": 27920,
+        "avgMoves": 34.9,
+        "wins": {
+          "0": 23,
+          "1": 241,
+          "2": 136
+        },
+        "seconds": 467.675
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_019.pt",
+        "onnx": "models\\blokus\\gen_019.onnx",
+        "rows": 139612,
+        "valPolicy": 2.6684042856823065,
+        "valValue": 0.24159710291121955,
+        "valValueVsZ": 0.5709378217899356
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_019.onnx:200",
+        "b": "heur:200",
+        "aWins": 39,
+        "bWins": 1,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 19,
+        "aScore": 0.975
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_019.onnx:200",
+        "b": "nn:models\\blokus\\gen_018.onnx:200",
+        "aWins": 24,
+        "bWins": 15,
+        "draws": 1,
+        "aWinsAsP1": 15,
+        "aWinsAsP2": 9,
+        "aScore": 0.6125
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_019",
+      "bestVsHeuristic": {
+        "aScore": 0.975
+      },
+      "seconds": 606
+    },
+    {
+      "gen": 20,
+      "selfplay": {
+        "games": 400,
+        "rows": 27604,
+        "avgMoves": 34.505,
+        "wins": {
+          "0": 18,
+          "1": 276,
+          "2": 106
+        },
+        "seconds": 447.473
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_020.pt",
+        "onnx": "models\\blokus\\gen_020.onnx",
+        "rows": 139174,
+        "valPolicy": 2.608684122031295,
+        "valValue": 0.2144711881781762,
+        "valValueVsZ": 0.5313540352045307
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_020.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_020.onnx:200",
+        "b": "nn:models\\blokus\\gen_019.onnx:200",
+        "aWins": 25,
+        "bWins": 13,
+        "draws": 2,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 7,
+        "aScore": 0.65
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_020",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 587
+    },
+    {
+      "gen": 21,
+      "selfplay": {
+        "games": 400,
+        "rows": 27558,
+        "avgMoves": 34.4475,
+        "wins": {
+          "0": 16,
+          "1": 264,
+          "2": 120
+        },
+        "seconds": 449.729
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_021.pt",
+        "onnx": "models\\blokus\\gen_021.onnx",
+        "rows": 138858,
+        "valPolicy": 2.55731994224467,
+        "valValue": 0.28498105747285546,
+        "valValueVsZ": 0.6742555293525822
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_021.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_021.onnx:200",
+        "b": "nn:models\\blokus\\gen_020.onnx:200",
+        "aWins": 23,
+        "bWins": 16,
+        "draws": 1,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 5,
+        "aScore": 0.5875
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_021",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 591
+    },
+    {
+      "gen": 22,
+      "selfplay": {
+        "games": 400,
+        "rows": 27474,
+        "avgMoves": 34.3425,
+        "wins": {
+          "0": 19,
+          "1": 278,
+          "2": 103
+        },
+        "seconds": 434.161
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_022.pt",
+        "onnx": "models\\blokus\\gen_022.onnx",
+        "rows": 138462,
+        "valPolicy": 2.4427029495206196,
+        "valValue": 0.2480789045713789,
+        "valValueVsZ": 0.6203076898337064
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_022.onnx:200",
+        "b": "heur:200",
+        "aWins": 39,
+        "bWins": 1,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 19,
+        "aScore": 0.975
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_022.onnx:200",
+        "b": "nn:models\\blokus\\gen_021.onnx:200",
+        "aWins": 19,
+        "bWins": 19,
+        "draws": 2,
+        "aWinsAsP1": 16,
+        "aWinsAsP2": 3,
+        "aScore": 0.5
+      },
+      "promoted": false,
+      "best": "models\\blokus\\gen_021",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 571
+    },
+    {
+      "gen": 23,
+      "selfplay": {
+        "games": 400,
+        "rows": 27626,
+        "avgMoves": 34.5325,
+        "wins": {
+          "0": 17,
+          "1": 284,
+          "2": 99
+        },
+        "seconds": 430.59
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_023.pt",
+        "onnx": "models\\blokus\\gen_023.onnx",
+        "rows": 138182,
+        "valPolicy": 2.4096243633756695,
+        "valValue": 0.18568325663875923,
+        "valValueVsZ": 0.4644047633182262
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_023.onnx:200",
+        "b": "heur:200",
+        "aWins": 38,
+        "bWins": 2,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 18,
+        "aScore": 0.95
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_023.onnx:200",
+        "b": "nn:models\\blokus\\gen_021.onnx:200",
+        "aWins": 18,
+        "bWins": 16,
+        "draws": 6,
+        "aWinsAsP1": 14,
+        "aWinsAsP2": 4,
+        "aScore": 0.525
+      },
+      "promoted": false,
+      "best": "models\\blokus\\gen_021",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 563
+    },
+    {
+      "gen": 24,
+      "selfplay": {
+        "games": 400,
+        "rows": 27458,
+        "avgMoves": 34.3225,
+        "wins": {
+          "0": 22,
+          "1": 276,
+          "2": 102
+        },
+        "seconds": 428.69
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_024.pt",
+        "onnx": "models\\blokus\\gen_024.onnx",
+        "rows": 137720,
+        "valPolicy": 2.447087359089094,
+        "valValue": 0.2033939943249891,
+        "valValueVsZ": 0.4886887301340582
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_024.onnx:200",
+        "b": "heur:200",
+        "aWins": 40,
+        "bWins": 0,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 20,
+        "aScore": 1
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_024.onnx:200",
+        "b": "nn:models\\blokus\\gen_021.onnx:200",
+        "aWins": 29,
+        "bWins": 11,
+        "draws": 0,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 11,
+        "aScore": 0.725
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_024",
+      "bestVsHeuristic": {
+        "aScore": 1
+      },
+      "seconds": 570
+    },
+    {
+      "gen": 25,
+      "selfplay": {
+        "games": 400,
+        "rows": 27482,
+        "avgMoves": 34.3525,
+        "wins": {
+          "0": 14,
+          "1": 294,
+          "2": 92
+        },
+        "seconds": 426.902
+      },
+      "train": {
+        "ckpt": "models\\blokus\\gen_025.pt",
+        "onnx": "models\\blokus\\gen_025.onnx",
+        "rows": 137598,
+        "valPolicy": 2.431194009848815,
+        "valValue": 0.16286077997091464,
+        "valValueVsZ": 0.4022347935065053
+      },
+      "vsHeuristic": {
+        "a": "nn:models\\blokus\\gen_025.onnx:200",
+        "b": "heur:200",
+        "aWins": 39,
+        "bWins": 1,
+        "draws": 0,
+        "aWinsAsP1": 20,
+        "aWinsAsP2": 19,
+        "aScore": 0.975
+      },
+      "vsBest": {
+        "a": "nn:models\\blokus\\gen_025.onnx:200",
+        "b": "nn:models\\blokus\\gen_024.onnx:200",
+        "aWins": 27,
+        "bWins": 12,
+        "draws": 1,
+        "aWinsAsP1": 18,
+        "aWinsAsP2": 9,
+        "aScore": 0.6875
+      },
+      "promoted": true,
+      "best": "models\\blokus\\gen_025",
+      "bestVsHeuristic": {
+        "aScore": 0.975
+      },
+      "seconds": 563
+    }
+  ]
+}

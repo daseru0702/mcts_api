@@ -32,7 +32,7 @@ async function playMatch(game, p1, p2, openingRandom) {
 async function workerMain() {
   const { gameId, a, b, gameIds, openingRandom } = workerData;
   const game = await loadGame(gameId);
-  const pa = await createPlayer(a), pb = await createPlayer(b);
+  const pa = await createPlayer(a, { mcts: game.mcts }), pb = await createPlayer(b, { mcts: game.mcts });
   for (const id of gameIds) {
     const aIsP1 = id % 2 === 0;
     const { winner, moves } = aIsP1

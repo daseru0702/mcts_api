@@ -3,7 +3,7 @@
 // AlphaZero 방식 PUCT MCTS (게임 무관, 브라우저/Node 공용)
 //  - 노드 확장 시 evaluator 로 (사전확률, 가치)를 한 번만 구합니다.
 //  - 가치는 항상 "그 노드에서 둘 차례인 플레이어" 기준이며, 역전파할 때 부호를 뒤집습니다.
-//  - 끝난 노드는 직전에 둔 플레이어가 이긴 것이므로 둘 차례 기준 -1 입니다.
+//  - 끝난 노드의 가치는 둘 차례 기준으로 이기면 +1, 지면 -1, 무승부(getWinner()=0)면 0 입니다.
 //
 // evaluator: { async evaluate(state, moves) → { priors: number[] (moves 와 같은 순서), value } }
 
@@ -20,7 +20,8 @@ class Node {
     this.expanded = false;
     if (state.isTerminal()) {
       this.terminal = true;
-      this.terminalValue = -1;
+      const w = state.getWinner();
+      this.terminalValue = w === 0 ? 0 : w === state.getCurrentPlayer() ? 1 : -1;
     } else if (maxMoves && state.getMoveCount() >= maxMoves) {
       this.terminal = true;
       this.terminalValue = 0;

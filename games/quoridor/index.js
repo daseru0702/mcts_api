@@ -12,6 +12,7 @@ export default {
   subtitle: "몬테카를로 트리 탐색 + 신경망으로 스스로 학습한 쿼리도 AI",
 
   // MCTS·신경망이 쓰는 상태 클래스 (인터페이스는 README "게임 추가하기" 참고)
+  order: 1,   // 웹 게임 목록 순서 (첫 게임이 기본 화면)
   Adapter: QuoridorAdapter,
 
   // 자가대국/대결 설정

@@ -69,9 +69,11 @@ async function gameIndex() {
   const list = [];
   for (const id of listGameIds()) {
     const g = await loadGame(id);
-    list.push({ id, name: g.name ?? id, title: g.title ?? id });
+    if (!g.viewUrl) continue; // 화면(view.js)이 아직 없는 게임은 웹 목록에서 제외
+    list.push({ id, name: g.name ?? id, title: g.title ?? id, order: g.order ?? 99 });
   }
-  return list;
+  // 첫 게임이 기본 화면입니다 (manifest 의 order 가 작은 순)
+  return list.sort((a, b) => a.order - b.order);
 }
 
 // 탐색은 CPU 를 많이 쓰므로 요청을 한 번에 하나씩 처리합니다
@@ -111,7 +113,7 @@ app.post("/api/move", async (req, res) => {
   try {
     const result = await enqueue(async () => {
       const t0 = Date.now();
-      const mcts = new MCTS(entry.evaluator, { simulations: level.simulations });
+      const mcts = new MCTS(entry.evaluator, { ...entry.game.mcts, simulations: level.simulations });
       const root = await mcts.search(state);
       const move = root.moves[mcts.pickMoveIndex(root, level.temperature)];
       return { move, stats: mcts.stats(root, 6), ms: Date.now() - t0 };

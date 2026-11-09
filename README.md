@@ -84,8 +84,9 @@ npm test
 
 ```
 games/<id>/
-  index.js    설명서: export default { id, name, title, subtitle, Adapter, selfplay, arena, view, hint, loseTip }
-  view.js     보드 화면: export function createView({ svg, onMove, setHint }) → { render(ctx), notation(move), playerInfo?(state, p) }
+  index.js    설명서: export default { id, name, title, subtitle, order?, Adapter, selfplay, arena, mcts?, view?, hint, loseTip }
+              (mcts = 그 게임의 MCTS 설정, 예: { fpuReduction: 0, dirichletAlpha: 0.05 } / view 가 없으면 웹 목록에서 빠짐)
+  view.js     보드 화면: export function createView({ svg, onMove, setHint }) → { render(ctx), notation(move), playerInfo?(state, p), resultText?(state, human) }
   view.css    (선택) 보드 스타일 — view.js 가 불러옴
   tests.js    (선택) 게임 규칙 테스트 — npm test 가 자동 실행
 ```
@@ -98,9 +99,10 @@ games/<id>/
 | `static INPUT_SHAPE` | 신경망 입력 `[C, H, W]` |
 | `static POLICY_SIZE` | 정책 출력 크기 |
 | `static SYMMETRIES` | (선택) 데이터 증강용 대칭 목록, 기본 `[false]` |
+| `static POLICY_PLANES` | (선택) 정책 앞부분이 `[평면, H, W]` 격자면 그 평면 수 → 학습이 합성곱 정책 출력층을 씀 (정책이 큰 게임용) |
 | `clone()`, `applyMove(m)`, `getPossibleMoves()` | 상태 복제, 수 두기, 합법 수 |
-| `isTerminal()`, `getWinner()`, `getCurrentPlayer()`, `getMoveCount()` | 승자는 1/2, 진행 중 0. 플레이어 1·2가 번갈아 둠 |
-| `encode(sym)`, `moveToIndex(m, sym)` | 둘 차례 기준 입력 텐서, 수 → 정책 인덱스 |
+| `isTerminal()`, `getWinner()`, `getCurrentPlayer()`, `getMoveCount()` | 승자는 1/2, 진행 중이거나 무승부면 0. 플레이어 1·2가 번갈아 둠 (패스도 수 하나) |
+| `encode(sym)`, `moveToIndex(m, sym)` | 둘 차례 기준 입력 텐서(값은 0~1), 수 → 정책 인덱스 |
 | `toJSON()` | 상태 직렬화 (복사본) |
 | `isLegalMove(m)`, `heuristicValue()`, `heuristicPriors(moves)`, `adjudicateValue()` | (선택) 합법성 검사, 0세대용 휴리스틱, 수 제한 판정 |
 

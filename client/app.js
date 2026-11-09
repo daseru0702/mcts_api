@@ -64,6 +64,9 @@ const view = createView({
 });
 
 // ─── 렌더링 ──────────────────────────────────────────────────────
+// 끝난 판은 isTerminal 로 판단합니다 (무승부는 승자 0)
+const isOver = () => ui.state.isTerminal();
+
 function render() {
   const winner = ui.state.getWinner();
   view.render({
@@ -75,19 +78,20 @@ function render() {
     stats: ui.stats,
     showCandidates: $("chkThinking").checked,
   });
-  renderPanel(winner);
+  renderPanel(winner, isOver());
 }
 
-function renderPanel(winner) {
+function renderPanel(winner, over) {
   const turn = ui.state.getCurrentPlayer();
   const human = bottomPlayer();
   const ai = 3 - human;
 
   // 상태 표시
   let text, cls;
-  if (winner) {
+  if (over) {
     cls = "over";
-    text = ui.demo ? `${winner === 1 ? "주황" : "청록"} AI 승리` : winner === human ? "🎉 승리했습니다!" : "AI 승리";
+    text = !winner ? "무승부"
+      : ui.demo ? `${winner === 1 ? "주황" : "청록"} AI 승리` : winner === human ? "🎉 승리했습니다!" : "AI 승리";
   } else if (ui.thinking || isAI(turn)) {
     cls = "ai";
     text = ui.demo ? `${turn === human ? "주황" : "청록"} AI 생각 중…` : "AI가 생각 중…";
@@ -101,14 +105,14 @@ function renderPanel(winner) {
   // 플레이어 카드
   $("aiName").textContent = ui.demo ? "청록 AI" : `AI · ${LEVEL_NAMES[ui.level]}`;
   document.querySelector("#cardHuman .pname").textContent = ui.demo ? "주황 AI" : "나";
-  $("cardHuman").classList.toggle("turn", !winner && turn === human);
-  $("cardAI").classList.toggle("turn", !winner && turn === ai);
+  $("cardHuman").classList.toggle("turn", !over && turn === human);
+  $("cardAI").classList.toggle("turn", !over && turn === ai);
   $("infoHuman").innerHTML = view.playerInfo?.(ui.state, human) ?? "";
   $("infoAI").innerHTML = view.playerInfo?.(ui.state, ai) ?? "";
 
   // 승률 게이지 (청록=AI 쪽 기준)
   let aiProb = 0.5;
-  if (winner) aiProb = winner === ai ? 1 : 0;
+  if (over) aiProb = !winner ? 0.5 : winner === ai ? 1 : 0;
   else if (ui.stats) {
     const pOfStats = (ui.stats.value + 1) / 2;       // stats 를 계산한 플레이어 기준
     aiProb = ui.statsPlayer === ai ? pOfStats : 1 - pOfStats;
@@ -131,16 +135,18 @@ function renderPanel(winner) {
   $("btnUndo").disabled = ui.demo || ui.thinking || !ui.log.some(l => l.player === ui.humanPlayer);
   $("btnDemo").classList.toggle("on", ui.demo);
   $("btnDemo").textContent = ui.demo ? "■ 데모 중지" : "▶ AI vs AI 데모";
-  $("hint").classList.toggle("hidden", ui.demo || !!winner);
+  $("hint").classList.toggle("hidden", ui.demo || over);
 
   // 종료 오버레이
   const ov = $("overlay");
-  if (winner && !ui.demo) {
+  if (over && !ui.demo) {
     ov.classList.remove("hidden");
-    $("overlayTitle").textContent = winner === human ? "승리! 🎉" : "AI 승리";
-    $("overlaySub").textContent = winner === human
+    $("overlayTitle").textContent = !winner ? "무승부" : winner === human ? "승리! 🎉" : "AI 승리";
+    const sub = winner === human
       ? `${Math.ceil(ui.log.length / 2)}수 만에 AI를 이겼습니다.`
-      : game.loseTip ?? "난이도를 낮춰 다시 도전해 보세요.";
+      : winner ? game.loseTip ?? "난이도를 낮춰 다시 도전해 보세요." : "";
+    // 게임이 점수 요약을 주면 함께 보여줍니다 (예: 블로커스 놓은 칸 수)
+    $("overlaySub").textContent = [view.resultText?.(ui.state, human), sub].filter(Boolean).join(" · ");
   } else {
     ov.classList.add("hidden");
   }
@@ -213,7 +219,7 @@ function newGame({ demo = false } = {}) {
 }
 
 async function maybeAI() {
-  if (ui.state.getWinner()) {
+  if (isOver()) {
     if (ui.demo) {
       const token = ui.token;
       setTimeout(() => { if (ui.demo && token === ui.token) newGame({ demo: true }); }, 5000);
@@ -265,7 +271,7 @@ function undo() {
 }
 
 function canHumanAct() {
-  return !ui.demo && !ui.thinking && !ui.state.getWinner() && !isAI(ui.state.getCurrentPlayer());
+  return !ui.demo && !ui.thinking && !isOver() && !isAI(ui.state.getCurrentPlayer());
 }
 
 // ─── 컨트롤 ─────────────────────────────────────────────────────

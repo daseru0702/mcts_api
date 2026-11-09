@@ -79,9 +79,8 @@ export class MCTSPure {
     }
     // 수 제한으로 끊긴 롤아웃은 승자 없음(0)으로 처리합니다.
     if (!state.isTerminal()) return 0;
-    // 터미널: 마지막에 둔 플레이어가 승자입니다.
-    // state.getCurrentPlayer()는 "다음" 차례이므로 3 - current 가 바로 승자.
-    return 3 - state.getCurrentPlayer();
+    // 터미널: 게임이 정한 승자 (무승부는 0)
+    return state.getWinner();
   }
 
   /** 시뮬레이션 결과를 루트부터 node까지 전파합니다. */

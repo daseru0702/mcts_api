@@ -7,20 +7,23 @@
 
 import { MCTS } from "../common/mcts.js";
 import { MCTSPure } from "../common/mcts_pure.js";
-import { HeuristicEvaluator, OnnxEvaluator } from "../common/evaluators.js";
+import { HeuristicEvaluator } from "../common/heuristic_evaluator.js";
 
-export async function createPlayer(spec, { maxMoves = 0 } = {}) {
+/** mcts = 게임 설명서의 MCTS 설정 (index.js 의 mcts: { fpuReduction, dirichletAlpha, ... }) */
+export async function createPlayer(spec, { maxMoves = 0, mcts = {} } = {}) {
   const parts = spec.split(":");
   const kind = parts[0];
   if (kind === "nn") {
     const sims = parseInt(parts.at(-1), 10);
     const modelPath = parts.slice(1, -1).join(":");
+    // onnxruntime-node 는 신경망 플레이어에서만 불러옵니다
+    const { OnnxEvaluator } = await import("../common/evaluators.js");
     const evaluator = await OnnxEvaluator.create(modelPath);
-    return { name: spec, mcts: new MCTS(evaluator, { simulations: sims, maxMoves }) };
+    return { name: spec, mcts: new MCTS(evaluator, { ...mcts, simulations: sims, maxMoves }) };
   }
   if (kind === "heur") {
     const sims = parseInt(parts[1], 10);
-    return { name: spec, mcts: new MCTS(new HeuristicEvaluator(), { simulations: sims, maxMoves }) };
+    return { name: spec, mcts: new MCTS(new HeuristicEvaluator(), { ...mcts, simulations: sims, maxMoves }) };
   }
   if (kind === "pure") {
     const sims = parseInt(parts[1], 10);
